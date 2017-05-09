@@ -27,7 +27,7 @@ public class DataGenerator {
 	static Random random = new Random(seed);
 	
 	/**
-	 * Parameters with default values
+	 * Parameters
 	 */
 	static int numDimensions = 10;
 	static int numClusters = 2;
@@ -59,29 +59,15 @@ public class DataGenerator {
 			e.printStackTrace();
 		}
 		
-		
-		/**
-		 * Generate gaussian clusters
-		 */
+		//Generate gaussian clusters
 		List<double[]> gaussianDataPoints = generateGaussianClusters();
-		//saveDataPointsToFile(gaussianDataPoints, "data/gauss.csv");
-		//plot(gaussianDataPoints, "plots/gauss.jpeg", true);  
 		
-		
-		/** 
-		 * Generate density-based clusters
-		 */
+		//Generate density-based clusters
 		List<double[]> densityDataPoints = generateDensityClusters();
-		//saveDataPointsToFile(densityDataPoints, "data/density.csv");
-		//plot(densityDataPoints, "plots/density.jpeg", true);
 		
-		
-		/**
-		 * Merge data points together
-		 */
+		//Merge data points together and save to file
 		List<double[]> mergedDataPoints = mergeDataPoints(gaussianDataPoints, densityDataPoints);
 		saveDataPointsToFile(mergedDataPoints, "data/merged.csv");
-		
 	}
 
 	private static List<double[]> generateGaussianClusters() {
