@@ -1,82 +1,54 @@
 package p2.clustering;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Map;
 
 import de.lmu.ifi.dbs.elki.algorithm.clustering.kmeans.KMeansMacQueen;
-import de.lmu.ifi.dbs.elki.algorithm.clustering.kmeans.initialization.RandomlyGeneratedInitialMeans;
 import de.lmu.ifi.dbs.elki.data.Cluster;
 import de.lmu.ifi.dbs.elki.data.Clustering;
 import de.lmu.ifi.dbs.elki.data.DoubleVector;
-import de.lmu.ifi.dbs.elki.data.NumberVector;
 import de.lmu.ifi.dbs.elki.data.model.KMeansModel;
-import de.lmu.ifi.dbs.elki.data.type.TypeUtil;
+import de.lmu.ifi.dbs.elki.database.AbstractDatabase;
 import de.lmu.ifi.dbs.elki.database.Database;
 import de.lmu.ifi.dbs.elki.database.StaticArrayDatabase;
-import de.lmu.ifi.dbs.elki.database.ids.DBIDRange;
-import de.lmu.ifi.dbs.elki.database.relation.Relation;
 import de.lmu.ifi.dbs.elki.datasource.ArrayAdapterDatabaseConnection;
-import de.lmu.ifi.dbs.elki.datasource.DatabaseConnection;
 import de.lmu.ifi.dbs.elki.distance.distancefunction.minkowski.EuclideanDistanceFunction;
-import de.lmu.ifi.dbs.elki.math.random.RandomFactory;
+import de.lmu.ifi.dbs.elki.utilities.ClassGenericsUtil;
+import de.lmu.ifi.dbs.elki.utilities.optionhandling.parameterization.ListParameterization;
 
 public class RunKMeans {
 
 	public static void main(String[] args) {
 
-		double[][] data = loadData("data/data_gauss.csv");
+		String file = "data/merged.csv";
+		Util util = new Util();	
+		
+		Map<String, Integer> header = util.getHeader(file);
+		int k = header.get("numClusters");
+		
+		double[][] data = util.loadData(file);
+		
+		ArrayAdapterDatabaseConnection dbc = new ArrayAdapterDatabaseConnection(data);
 
-		DatabaseConnection dbc = new ArrayAdapterDatabaseConnection(data);
-		Database db = new StaticArrayDatabase(dbc, null);
+		ListParameterization dbParams = new ListParameterization();
+		dbParams.addParameter(AbstractDatabase.Parameterizer.DATABASE_CONNECTION_ID, dbc);
+
+		Database db = ClassGenericsUtil.parameterizeOrAbort(StaticArrayDatabase.class, dbParams);
 		db.initialize();
-		Relation<NumberVector> rel = db.getRelation(TypeUtil.NUMBER_VECTOR_FIELD);
-		DBIDRange ids = (DBIDRange) rel.getDBIDs();
 
-		EuclideanDistanceFunction dist = EuclideanDistanceFunction.STATIC;
-		RandomlyGeneratedInitialMeans init = new RandomlyGeneratedInitialMeans(RandomFactory.DEFAULT);
-
-		KMeansMacQueen<DoubleVector> km = new KMeansMacQueen<>(dist, 2, 0, init);
-
-		Clustering<KMeansModel> c = km.run(db);
+		ListParameterization kmeansParams = new ListParameterization();
+		kmeansParams.addParameter(KMeansMacQueen.K_ID, k);
+		kmeansParams.addParameter(KMeansMacQueen.DISTANCE_FUNCTION_ID, EuclideanDistanceFunction.class);
+		
+		KMeansMacQueen<DoubleVector> kmeans = ClassGenericsUtil.parameterizeOrAbort(KMeansMacQueen.class, kmeansParams);
+		
+		Clustering<KMeansModel> c = kmeans.run(db);
 
 		int i = 0;
-		for (Cluster<KMeansModel> clu : c.getAllClusters()) {
-			System.out.println("Cluster #" + i);
-			System.out.println("  Size: " + clu.size());
-			System.out.println("  Center: " + clu.getModel().getPrototype().toString());
-			System.out.println();
-			++i;
-		}
-
-	}
-
-	public static double[][] loadData(String file) {
+		for (Cluster<KMeansModel> clu : c.getAllClusters()) 
+			System.out.println("Cluster #" + i++ + "\n  Size: " + clu.size() + "\n");
 		
-		ArrayList<double[]> rows = new ArrayList<double[]>();
-		String line = "";
 
-		try {
-			BufferedReader br = new BufferedReader(new FileReader(file));
-			while ((line = br.readLine()) != null) {
-
-				double[] doubleValues = Arrays.stream(line.split(",")).mapToDouble(Double::parseDouble).toArray();
-				rows.add(doubleValues);
-			}
-
-			br.close();
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		double[][] data = new double[rows.size()][rows.get(0).length];
-
-		for (int i = 0; i < rows.size(); i++)
-			data[i] = rows.get(i);
-
-		return data;
 	}
+	
 
 }

@@ -14,18 +14,16 @@ import de.lmu.ifi.dbs.elki.index.tree.spatial.rstarvariants.rstar.RStarTreeFacto
 import de.lmu.ifi.dbs.elki.utilities.ClassGenericsUtil;
 import de.lmu.ifi.dbs.elki.utilities.optionhandling.parameterization.ListParameterization;
 
-public class RunDBSCAN {
+public class RunDBSCANOnDensityDimensions {
 
 	public static void main(String[] args) {
 
-		String file = "data/merged.csv";
-		
 		int minPts = 5;
 		double epsilon = 2.0;
 		
 		Util util = new Util();
 		
-		double[][] data = util.loadData(file);
+		double[][] data = util.loadDensityData("data/merged.csv");
 		
 		ArrayAdapterDatabaseConnection dbc = new ArrayAdapterDatabaseConnection(data);
 
