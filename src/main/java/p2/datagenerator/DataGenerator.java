@@ -29,30 +29,40 @@ public class DataGenerator {
 	/**
 	 * Parameters
 	 */
-	static int numDimensions = 10;
+	static int numDimensions = 2;
 	static int numClusters = 2;
-	static int numPointsPerCluster = 1000;
-	
+	static int numPointsPerCluster = 300;
+	static String spacingType = "o";
+	static boolean isInconsistent = false;
 	
 	public static void main(String[] args) {
 		
 		CommandLineParser parser = new DefaultParser();
 		Options options = new Options();
-		options.addOption("nd", "num-dimensions", true, "Number of dimensions.");
-		options.addOption("nc", "num-clusters", true, "Number of clusters.");
-		options.addOption("np", "num-points-per-cluster", true, "Number of points per cluster.");
+		options.addOption("d", "num-dimensions", true, "Number of dimensions.");
+		options.addOption("c", "num-clusters", true, "Number of clusters.");
+		options.addOption("p", "num-points-per-cluster", true, "Number of points per cluster.");
+		options.addOption("s", "spacing", true, "[s] separated, [o] overlapping");
+		options.addOption("i", "inconsistent", false, "Generates an inconsitent data set");
 		
 		try {
 			CommandLine line = parser.parse(options, args);
 			
-			if (line.hasOption("nd"))	
-				numDimensions = Integer.parseInt(line.getOptionValue("nd"));
+			if (line.hasOption("d"))	
+				numDimensions = Integer.parseInt(line.getOptionValue("d"));
 			
-			if (line.hasOption("nc"))	
-				numClusters = Integer.parseInt(line.getOptionValue("nc"));
+			if (line.hasOption("c"))	
+				numClusters = Integer.parseInt(line.getOptionValue("c"));
 			
-			if (line.hasOption("np"))	
-				numPointsPerCluster = Integer.parseInt(line.getOptionValue("np"));
+			if (line.hasOption("p"))	
+				numPointsPerCluster = Integer.parseInt(line.getOptionValue("p"));
+			
+			if (line.hasOption("s")) {				
+				spacingType = line.getOptionValue("s");
+				
+				if (!(spacingType.equals("s") || spacingType.equals("o") || spacingType.equals("i")))
+					throw new ParseException("Spacing type must be one of s|o|i.");
+			}
 			
 		} catch (ParseException e) {
 			System.out.println( "Error on parsing command line arguments.");
@@ -60,14 +70,21 @@ public class DataGenerator {
 		}
 		
 		//Generate gaussian clusters
+		System.out.println("Generate gaussian clusters ...");
 		List<double[]> gaussianDataPoints = generateGaussianClusters();
+		plot(gaussianDataPoints, "plots/gauss.jpeg", true);
 		
 		//Generate density-based clusters
+		System.out.println("Generate density-based clusters ...");
 		List<double[]> densityDataPoints = generateDensityClusters();
+		//plot(densityDataPoints, "plots/density.jpeg", true);
 		
 		//Merge data points together and save to file
+		System.out.println("Merge data points together ...");
 		List<double[]> mergedDataPoints = mergeDataPoints(gaussianDataPoints, densityDataPoints);
 		saveDataPointsToFile(mergedDataPoints, "data/merged.csv");
+		
+		System.out.println("Finished.");
 	}
 
 	private static List<double[]> generateGaussianClusters() {
@@ -79,12 +96,18 @@ public class DataGenerator {
 		
 		return gaussianDataPoints;
 	}
-
+	
 	private static List<double[]> getGaussianCluster() {
 		
 		List<double[]> cluster = new ArrayList<double[]>();
 		
-		double deviation = 0.1 ;				     		
+		double deviation = 0;
+		
+		if (spacingType.equals("s"))
+			deviation = 0.01;
+		else if (spacingType.equals("o"))
+			deviation = 0.2;
+		
 		double[] mean = new double[numDimensions];
 		
 		for (int j = 0; j < numDimensions; j++) 
@@ -103,8 +126,8 @@ public class DataGenerator {
 	}
 	
 	private static List<double[]> generateDensityClusters() {
-		double epsilon = 1.0;
-		double spacing = numPointsPerCluster * 0.05;  //Spacing between clusters
+		double epsilon = 1.0;		
+		double spacing = numPointsPerCluster * epsilon;  //Fully separated clusters
 		
 		List<double[]> densityDataPoints = new ArrayList<double[]>();
 		
@@ -115,7 +138,7 @@ public class DataGenerator {
 			
 			densityDataPoints.addAll(getDensityCluster(epsilon, firstPoint));
 	
-			//Ensure that clusters don't overlap 
+			//Apply spacing
 			for (int j = 0; j < numDimensions; j++) 
 				firstPoint[j] = firstPoint[j] + (random.nextDouble() * epsilon * spacing * (random.nextBoolean() ? 1 : -1));
 		}
@@ -133,8 +156,11 @@ public class DataGenerator {
 			
 			double[] nextPoint = new double[numDimensions]; 
 			
+			int direction = random.nextBoolean() ? 1 : -1;
+			
 			for (int j = 0; j < numDimensions; j++)
-				nextPoint[j] = firstPoint[j] + ((epsilon * (random.nextBoolean() ? 1 : -1)) * random.nextDouble());
+				nextPoint[j] = firstPoint[j] + ((epsilon * direction) * random.nextDouble());
+				
 			cluster.add(nextPoint.clone());
 			
 			firstPoint = nextPoint;

@@ -47,7 +47,9 @@ public class RunDBSCAN {
 		
 		int i = 0;
 		for (Cluster<Model> clu : c.getAllClusters())
-			System.out.println("Cluster #" + i++ + "\n  Size: " + clu.size() + "\n");
+			if (clu.size() > 0)
+				System.out.println("Cluster #" + i++ + "\n  Size: " + clu.size() + "\n");
+			
 
 	}
 }
