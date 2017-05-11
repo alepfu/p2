@@ -22,8 +22,8 @@ public class RunKMeans {
 		String file = "data/merged.csv";
 		Util util = new Util();	
 		
-		Map<String, Integer> header = util.getHeader(file);
-		int k = header.get("numClusters");
+		Map<String, String> header = util.getHeader(file);
+		int k = Integer.parseInt(header.get("numClusters"));
 		
 		double[][] data = util.loadData(file);
 		

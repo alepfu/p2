@@ -44,8 +44,8 @@ public class Util {
 		
 		double[][] mergedData = this.loadData(file);
 		
-		Map<String, Integer> header = this.getHeader(file);
-		int numDimensions = header.get("numDimensions");
+		Map<String, String> header = this.getHeader(file);
+		int numDimensions = Integer.parseInt(header.get("numDimensions"));
 		
 		//Copy gaussian data points to double[][] array
 		double[][] gaussianData = new double[mergedData.length][numDimensions];
@@ -60,8 +60,8 @@ public class Util {
 		
 		double[][] mergedData = this.loadData(file);
 		
-		Map<String, Integer> header = this.getHeader(file);
-		int numDimensions = header.get("numDimensions");
+		Map<String, String> header = this.getHeader(file);
+		int numDimensions = Integer.parseInt(header.get("numDimensions"));
 		
 		//Copy density data points to double[][] array
 		double[][] densityData = new double[mergedData.length][numDimensions];
@@ -72,8 +72,8 @@ public class Util {
 		return densityData; 
 	}
 
-	public Map<String, Integer> getHeader(String file) {
-		Map<String, Integer> header = new HashMap<String, Integer>();
+	public Map<String, String> getHeader(String file) {
+		Map<String, String> header = new HashMap<String, String>();
 		
 		String line = "";
 		try {
@@ -81,10 +81,8 @@ public class Util {
 			while ((line = br.readLine()) != null) {
 
 				if (line.startsWith("#")) {
-					
 						String[] split = line.split("=");
-						header.put(split[0].substring(1), Integer.parseInt(split[1]));
-						
+						header.put(split[0].substring(1), split[1]);
 				}
 			}
 

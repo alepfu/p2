@@ -23,7 +23,7 @@ import org.jfree.data.xy.XYSeriesCollection;
 
 public class DataGenerator {
 	
-	static long seed = 1234;
+	static long seed = 73;
 	static Random random = new Random(seed);
 	
 	/**
@@ -31,7 +31,7 @@ public class DataGenerator {
 	 */
 	static int numDimensions = 2;
 	static int numClusters = 2;
-	static int numPointsPerCluster = 300;
+	static int numPointsPerCluster = 1000;
 	static String spacingType = "o";
 	static boolean isInconsistent = false;
 	
@@ -69,20 +69,22 @@ public class DataGenerator {
 			e.printStackTrace();
 		}
 		
-		//Generate gaussian clusters
 		System.out.println("Generate gaussian clusters ...");
 		List<double[]> gaussianDataPoints = generateGaussianClusters();
-		plot(gaussianDataPoints, "plots/gauss.jpeg", true);
 		
-		//Generate density-based clusters
 		System.out.println("Generate density-based clusters ...");
 		List<double[]> densityDataPoints = generateDensityClusters();
-		//plot(densityDataPoints, "plots/density.jpeg", true);
 		
-		//Merge data points together and save to file
 		System.out.println("Merge data points together ...");
 		List<double[]> mergedDataPoints = mergeDataPoints(gaussianDataPoints, densityDataPoints);
 		saveDataPointsToFile(mergedDataPoints, "data/merged.csv");
+		
+		
+		try {
+			plot(mergedDataPoints, true);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		
 		System.out.println("Finished.");
 	}
@@ -106,7 +108,7 @@ public class DataGenerator {
 		if (spacingType.equals("s"))
 			deviation = 0.01;
 		else if (spacingType.equals("o"))
-			deviation = 0.2;
+			deviation = 0.06;
 		
 		double[] mean = new double[numDimensions];
 		
@@ -127,7 +129,13 @@ public class DataGenerator {
 	
 	private static List<double[]> generateDensityClusters() {
 		double epsilon = 1.0;		
-		double spacing = numPointsPerCluster * epsilon;  //Fully separated clusters
+		
+		double spacing = 0;
+		
+		if (spacingType.equals("s"))
+			spacing = numPointsPerCluster * epsilon;
+		else if (spacingType.equals("o"))
+			spacing = epsilon;
 		
 		List<double[]> densityDataPoints = new ArrayList<double[]>();
 		
@@ -179,7 +187,7 @@ public class DataGenerator {
 	private static List<double[]> mergeDataPoints(List<double[]> gaussianDataPoints, List<double[]> densityDataPoints) {
 		
 		int numPoints = numClusters * numPointsPerCluster;
-		int clusterId = 0;
+		int clusterId = -1;
 		
 		List<double[]> dataPoints = new ArrayList<double[]>();
 		
@@ -215,7 +223,9 @@ public class DataGenerator {
 			//Add header holding the set parameter values
 			writer.write("#numClusters=" + numClusters + "\n" +
 						 "#numDimensions=" + numDimensions + "\n" +
-						 "#numPointsPerCluster=" + numPointsPerCluster + "\n");
+						 "#numPointsPerCluster=" + numPointsPerCluster + "\n" +
+						 "#spacingType=" + spacingType + "\n" +
+						 "#isInconsistent=" + isInconsistent + "\n");
 			
 			for (double[] row : dataPoints)
 				writer.write(Arrays.toString(row).replace(" ", "")
@@ -227,32 +237,59 @@ public class DataGenerator {
 		}
 	}
 	
-	private static void plot(List<double[]> dataPoints, String filename, boolean show) {
-
-		XYSeriesCollection dataset = new XYSeriesCollection();
-		XYSeries series = new XYSeries("Cluster");
-
-		for (double[] dataPoint : dataPoints)
-			series.add(dataPoint[0], dataPoint[1]);
-
-		dataset.addSeries(series);
+	/**
+	 * Generates and displays scatter plots for the gaussian and density clusters.
+	 * Only useful for 2D data points.
+	 * 
+	 * @param mergedDataPoints The full set of generated data points with point and cluster ids.
+	 * @param showPlot Wether the generated plot image should be shown or not.
+	 */
+	private static void plot(List<double[]> mergedDataPoints, boolean showPlot) throws Exception {
 		
-		JFreeChart chart = ChartFactory.createScatterPlot("", "", "", dataset, 
+		System.out.println("Plotting gaussian clusters ...");
+		String filename = "plots/gauss.jpeg";
+		
+		XYSeriesCollection datasetGauss = new XYSeriesCollection();
+		for (int i = 0; i < numClusters; i++) {
+			XYSeries series = new XYSeries("Cluster #" + i);
+				for (double[] dataPoint : mergedDataPoints)
+					if (dataPoint[dataPoint.length - 1] == i)
+						series.add(dataPoint[0], dataPoint[1]);
+				datasetGauss.addSeries(series);
+		}
+		
+		JFreeChart chartGauss = ChartFactory.createScatterPlot("Gauss clusters", "x1", "x2", datasetGauss, 
 				PlotOrientation.VERTICAL, false, false, false);
 		
-		if (show) {
-			ChartFrame frame = new ChartFrame(filename, chart);
+		if (showPlot) {
+			ChartFrame frame = new ChartFrame(filename, chartGauss);
 			frame.pack();
 			frame.setVisible(true);
 		}
 		
-		int width = 660;
-		int height = 420;
-
-		try {
-			ChartUtilities.saveChartAsJPEG(new File(filename), chart, width, height);
-		} catch (IOException e) {
-			e.printStackTrace();
+		ChartUtilities.saveChartAsJPEG(new File(filename), chartGauss, 660, 420);
+		
+		System.out.println("Plotting density clusters ...");
+		filename = "plots/density.jpeg";
+		
+		XYSeriesCollection datasetDensity = new XYSeriesCollection();
+		for (int i = 0; i < numClusters; i++) {
+			XYSeries series = new XYSeries("Cluster #" + i);
+				for (double[] dataPoint : mergedDataPoints)
+					if (dataPoint[dataPoint.length - 1] == i)
+						series.add(dataPoint[0 + numDimensions], dataPoint[1 + numDimensions]);
+				datasetDensity.addSeries(series);
 		}
+		
+		JFreeChart chartDensity = ChartFactory.createScatterPlot("Density clusters", "x1", "x2", datasetDensity, 
+				PlotOrientation.VERTICAL, false, false, false);
+		
+		if (showPlot) {
+			ChartFrame frame = new ChartFrame(filename, chartDensity);
+			frame.pack();
+			frame.setVisible(true);
+		}
+		
+		ChartUtilities.saveChartAsJPEG(new File(filename), chartGauss, 660, 420);
 	}
 }
