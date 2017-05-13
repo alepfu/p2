@@ -3,25 +3,34 @@ package p2.clustering;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Util {
 	
-	public double[][] loadData(String file) {
+	public double[][] loadMergedData(String file) {
 		
-		ArrayList<double[]> rows = new ArrayList<double[]>();
-		String line = "";
+		Map<String, String> header = this.getHeader(file);
+		int numDimensions = Integer.parseInt(header.get("numDimensions"));
+		int numPointsPerCluster = Integer.parseInt(header.get("numPointsPerCluster"));
+		int numClusters = Integer.parseInt(header.get("numClusters"));
+		int numPoints = numClusters * numPointsPerCluster;
 
-		//Read lines from CSV file, omit header
+		double[][] data = new double[numPoints][numDimensions * 2];
+		
 		try {
+			String line = "";
 			BufferedReader br = new BufferedReader(new FileReader(file));
 			while ((line = br.readLine()) != null) {
-
+			
 				if (!line.startsWith("#")) {
-					double[] doubleValues = Arrays.stream(line.split(",")).mapToDouble(Double::parseDouble).toArray();
-					rows.add(doubleValues);
+				
+					String[] split = line.split(",");
+					int id = Integer.parseInt(split[0]);
+					
+					for (int j = 0; j < (numDimensions * 2); j++)
+						data[id][j] = Double.parseDouble(split[j + 1]);
 				}
 			}
 
@@ -30,19 +39,13 @@ public class Util {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
-		//Copy values to double[][] array, omit the last 2 columns holding the point and cluster ids
-		double[][] data = new double[rows.size()][rows.get(0).length - 2];
-		for (int i = 0; i < rows.size(); i++)
-			for (int j = 0; j < rows.get(0).length - 2; j++)
-				data[i][j] = rows.get(i)[j];
 		
 		return data;
 	}
 	
 	public double[][] loadGaussianData(String file) {
 		
-		double[][] mergedData = this.loadData(file);
+		double[][] mergedData = this.loadMergedData(file);
 		
 		Map<String, String> header = this.getHeader(file);
 		int numDimensions = Integer.parseInt(header.get("numDimensions"));
@@ -58,7 +61,7 @@ public class Util {
 	
 	public double[][] loadDensityData(String file) {
 		
-		double[][] mergedData = this.loadData(file);
+		double[][] mergedData = this.loadMergedData(file);
 		
 		Map<String, String> header = this.getHeader(file);
 		int numDimensions = Integer.parseInt(header.get("numDimensions"));
@@ -73,16 +76,48 @@ public class Util {
 	}
 
 	public Map<String, String> getHeader(String file) {
-		Map<String, String> header = new HashMap<String, String>();
 		
-		String line = "";
+		Map<String, String> header = new HashMap<String, String>();
+
 		try {
+			String line = "";
 			BufferedReader br = new BufferedReader(new FileReader(file));
 			while ((line = br.readLine()) != null) {
 
 				if (line.startsWith("#")) {
-						String[] split = line.split("=");
-						header.put(split[0].substring(1), split[1]);
+					String[] split = line.split("=");
+					header.put(split[0].substring(1), split[1]);
+				}
+			}
+
+			br.close();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return header;
+	}
+	
+	public List<int[]> getClusterAssignments(String file) {
+		
+//		Map<String, String> header = this.getHeader(file);
+//		int numPointsPerCluster = Integer.parseInt(header.get("numPointsPerCluster"));
+//		int numClusters = Integer.parseInt(header.get("numClusters"));
+
+		List<int[]> assignments = new ArrayList<int[]>();
+		
+		try {
+			String line = "";
+			BufferedReader br = new BufferedReader(new FileReader(file));
+			while ((line = br.readLine()) != null) {
+
+				if (!line.startsWith("#")) {
+					String[] split = line.split(",");
+					int[] a = new int[2];
+					a[0] = Integer.parseInt(split[0]);
+					a[1] = Integer.parseInt(split[split.length - 1]);
+					assignments.add(a);
 				}
 			}
 
@@ -92,6 +127,6 @@ public class Util {
 			e.printStackTrace();
 		}
 		
-		return header;
+		return assignments;
 	}
 }

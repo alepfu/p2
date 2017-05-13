@@ -32,7 +32,7 @@ public class DataGenerator {
 	static int numDimensions = 2;
 	static int numClusters = 2;
 	static int numPointsPerCluster = 1000;
-	static String spacingType = "o";
+	static String spacingType = "s";
 	static boolean isInconsistent = false;
 	
 	public static void main(String[] args) {
@@ -76,9 +76,8 @@ public class DataGenerator {
 		List<double[]> densityDataPoints = generateDensityClusters();
 		
 		System.out.println("Merge data points together ...");
-		List<double[]> mergedDataPoints = mergeDataPoints(gaussianDataPoints, densityDataPoints);
+		List<MergedDataPoint> mergedDataPoints = mergeDataPoints(gaussianDataPoints, densityDataPoints);
 		saveDataPointsToFile(mergedDataPoints, "data/merged.csv");
-		
 		
 		try {
 			plot(mergedDataPoints, true);
@@ -178,45 +177,30 @@ public class DataGenerator {
 	}
 	
 	/**
-	 * Merges 2 sets of data points together, appending a point and cluster id to every row.
+	 * Merges sets of gaussian and density data points together, adding point and cluster ids to every row.
 	 * 
 	 * @param gaussianDataPoints
 	 * @param densityDataPoints
-	 * @return List of double[] of the form "gaussian dimensions, density dimensions, point id, cluster id"
+	 * @return List of MergedDataPoint
 	 */
-	private static List<double[]> mergeDataPoints(List<double[]> gaussianDataPoints, List<double[]> densityDataPoints) {
+	private static List<MergedDataPoint> mergeDataPoints(List<double[]> gaussianDataPoints, List<double[]> densityDataPoints) {
 		
+		List<MergedDataPoint> dataPoints = new ArrayList<MergedDataPoint>();
 		int numPoints = numClusters * numPointsPerCluster;
 		int clusterId = -1;
 		
-		List<double[]> dataPoints = new ArrayList<double[]>();
-		
 		for (int i = 0; i < numPoints; i++) {
-			
 			if ((i % numPointsPerCluster) == 0)
 				clusterId++;
 			
-			double[] gaussianPoint = gaussianDataPoints.get(i);
-			double[] densityPoint = densityDataPoints.get(i);
-		
-			double[] values = new double[(numDimensions * 2) + 2];
-			
-			for (int j = 0; j < numDimensions; j++) { 
-				values[j] = gaussianPoint[j];
-				values[j + numDimensions] = densityPoint[j];
-			}
-
-			//Append point and cluster ids
-			values[values.length - 2] = i;
-			values[values.length - 1] = clusterId;
-			
-			dataPoints.add(values);
+			MergedDataPoint p = new MergedDataPoint(gaussianDataPoints.get(i), densityDataPoints.get(i), i, clusterId);
+			dataPoints.add(p);
 		}
 		
 		return dataPoints;
 	}
 	
-	private static void saveDataPointsToFile(List<double[]> dataPoints, String file) {
+	private static void saveDataPointsToFile(List<MergedDataPoint> dataPoints, String file) {
 		try {
 			BufferedWriter writer = new BufferedWriter(new FileWriter(file));
 			
@@ -227,9 +211,10 @@ public class DataGenerator {
 						 "#spacingType=" + spacingType + "\n" +
 						 "#isInconsistent=" + isInconsistent + "\n");
 			
-			for (double[] row : dataPoints)
-				writer.write(Arrays.toString(row).replace(" ", "")
-						.replace("[", "").replace("]", "\n"));
+			for (MergedDataPoint p : dataPoints) {
+				writer.write(p.toString());
+				writer.newLine();
+			}
 			writer.flush();
 			writer.close();
 		} catch (IOException e) {
@@ -244,7 +229,7 @@ public class DataGenerator {
 	 * @param mergedDataPoints The full set of generated data points with point and cluster ids.
 	 * @param showPlot Wether the generated plot image should be shown or not.
 	 */
-	private static void plot(List<double[]> mergedDataPoints, boolean showPlot) throws Exception {
+	private static void plot(List<MergedDataPoint> mergedDataPoints, boolean showPlot) throws Exception {
 		
 		System.out.println("Plotting gaussian clusters ...");
 		String filename = "plots/gauss.jpeg";
@@ -252,9 +237,9 @@ public class DataGenerator {
 		XYSeriesCollection datasetGauss = new XYSeriesCollection();
 		for (int i = 0; i < numClusters; i++) {
 			XYSeries series = new XYSeries("Cluster #" + i);
-				for (double[] dataPoint : mergedDataPoints)
-					if (dataPoint[dataPoint.length - 1] == i)
-						series.add(dataPoint[0], dataPoint[1]);
+				for (MergedDataPoint dataPoint : mergedDataPoints)
+					if (dataPoint.getClusterId() == i)
+						series.add(dataPoint.getGaussFeatures()[0], dataPoint.getGaussFeatures()[1]);
 				datasetGauss.addSeries(series);
 		}
 		
@@ -275,9 +260,9 @@ public class DataGenerator {
 		XYSeriesCollection datasetDensity = new XYSeriesCollection();
 		for (int i = 0; i < numClusters; i++) {
 			XYSeries series = new XYSeries("Cluster #" + i);
-				for (double[] dataPoint : mergedDataPoints)
-					if (dataPoint[dataPoint.length - 1] == i)
-						series.add(dataPoint[0 + numDimensions], dataPoint[1 + numDimensions]);
+			for (MergedDataPoint dataPoint : mergedDataPoints)
+				if (dataPoint.getClusterId() == i)
+					series.add(dataPoint.getDensityFeatures()[0], dataPoint.getDensityFeatures()[1]);
 				datasetDensity.addSeries(series);
 		}
 		

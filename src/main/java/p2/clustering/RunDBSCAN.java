@@ -30,7 +30,7 @@ public class RunDBSCAN {
 		int minPts = 2 * dim - 1;	//As suggested by ELKI
 		double epsilon = 1.0;
 		
-		double[][] data = util.loadData(file);
+		double[][] data = util.loadMergedData(file);
 		
 		ArrayAdapterDatabaseConnection dbc = new ArrayAdapterDatabaseConnection(data);
 
