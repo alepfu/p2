@@ -1,76 +1,110 @@
 package p2.clustering;
 
-import java.util.Map;
-
 import de.lmu.ifi.dbs.elki.algorithm.clustering.DBSCAN;
 import de.lmu.ifi.dbs.elki.data.Cluster;
 import de.lmu.ifi.dbs.elki.data.Clustering;
 import de.lmu.ifi.dbs.elki.data.DoubleVector;
+import de.lmu.ifi.dbs.elki.data.NumberVector;
 import de.lmu.ifi.dbs.elki.data.model.Model;
+import de.lmu.ifi.dbs.elki.data.type.TypeUtil;
 import de.lmu.ifi.dbs.elki.database.AbstractDatabase;
 import de.lmu.ifi.dbs.elki.database.Database;
 import de.lmu.ifi.dbs.elki.database.StaticArrayDatabase;
+import de.lmu.ifi.dbs.elki.database.ids.DBIDIter;
+import de.lmu.ifi.dbs.elki.database.ids.DBIDRange;
+import de.lmu.ifi.dbs.elki.database.ids.integer.SimpleDBIDFactory;
+import de.lmu.ifi.dbs.elki.database.relation.Relation;
 import de.lmu.ifi.dbs.elki.datasource.ArrayAdapterDatabaseConnection;
 import de.lmu.ifi.dbs.elki.distance.distancefunction.minkowski.EuclideanDistanceFunction;
+import de.lmu.ifi.dbs.elki.distance.similarityfunction.cluster.ClusteringAdjustedRandIndexSimilarityFunction;
 import de.lmu.ifi.dbs.elki.index.tree.spatial.rstarvariants.rstar.RStarTreeFactory;
 import de.lmu.ifi.dbs.elki.utilities.ClassGenericsUtil;
 import de.lmu.ifi.dbs.elki.utilities.optionhandling.parameterization.ListParameterization;
 
 public class RunDBSCAN {
 
+	private static final String FILE = "data/merged.csv";
+	
 	public static void main(String[] args) {
 
-		String file = "data/merged.csv";
-		Util util = new Util();	
+		//Load data and access header information
+		LoadDataUtil util = new LoadDataUtil(FILE);	
+		int numDimensions = util.getNumDimensions();
+		int numClusters = util.getNumClusters();
+		int numPointsPerCluster = util.getNumPointsPerCluster();
+		double[][] data = util.loadMergedData();
 		
-		Map<String, String> header = util.getHeader(file);
-		int dim = Integer.parseInt(header.get("numDimensions"));
-		int k = Integer.parseInt(header.get("numClusters"));
-		
-		int minPts = 2 * dim - 1;	//As suggested by ELKI
-		double epsilon = 1.0;
-		
-		double[][] data = util.loadMergedData(file);
-		
+		//Initialize DB
 		ArrayAdapterDatabaseConnection dbc = new ArrayAdapterDatabaseConnection(data);
-
 		ListParameterization dbParams = new ListParameterization();
 		dbParams.addParameter(AbstractDatabase.Parameterizer.DATABASE_CONNECTION_ID, dbc);
 		dbParams.addParameter(AbstractDatabase.Parameterizer.INDEX_ID, RStarTreeFactory.class);
-
 		Database db = ClassGenericsUtil.parameterizeOrAbort(StaticArrayDatabase.class, dbParams);
 		db.initialize();
-
+		Relation<NumberVector> rel = db.getRelation(TypeUtil.NUMBER_VECTOR_FIELD);
+	    DBIDRange ids = (DBIDRange) rel.getDBIDs();
 				
-		//Repeat running the algorithm until the right number of clusters is found.
-		
-		double inc = 0.01;
+		//Repeat running the algorithm until the right number of clusters is found
+		double stepsize = 0.1;
 		int nFoundClusters = 0;
-		Clustering<Model> c;
-		
+		int minPts = 2 * numDimensions - 1;		//As suggested by ELKI
+		double epsilon = 1.0 * (numDimensions / 2.0);	//Empiric
+		Clustering<Model> dbscanClustering;
 		do {
+			//Set clustering algorithm parameters
 			ListParameterization dbscanParams = new ListParameterization();
 			dbscanParams.addParameter(DBSCAN.Parameterizer.EPSILON_ID, epsilon);
 			dbscanParams.addParameter(DBSCAN.Parameterizer.MINPTS_ID, minPts);
 			dbscanParams.addParameter(DBSCAN.DISTANCE_FUNCTION_ID, EuclideanDistanceFunction.class);
 	
+			//Run clustering
 			DBSCAN<DoubleVector> dbscan = ClassGenericsUtil.parameterizeOrAbort(DBSCAN.class, dbscanParams);
-			c = dbscan.run(db);
+			dbscanClustering = dbscan.run(db);
+			System.out.println("Running DBSCAN clustering (eps = " + epsilon + ") ...");
+			epsilon += stepsize; 
 			
-			epsilon += inc; 
-			
-			//Since this DBSCAN implementation counts 0-element-clusters as clusters we have to count for ourself.
+			//Since this DBSCAN implementation counts 0-element-clusters as clusters we have to count for ourself
 			nFoundClusters = 0;
-			for (Cluster<Model> clu : c.getAllClusters())
+			for (Cluster<Model> clu : dbscanClustering.getAllClusters())
 				if (clu.size() > 0)
 					++nFoundClusters;
 		
-		} while (nFoundClusters > k);
+		} while (nFoundClusters > numClusters);
 			
+		//Output the found clusters and objects, omit 0-element-clusters
+		int clusterId = 0;
+		for (Cluster<Model> c : dbscanClustering.getAllClusters()) {
+			if (c.size() > 0) {
+				System.out.print("#" + clusterId + " [" + c.size() + "]");
+				for (DBIDIter it = c.getIDs().iter(); it.valid(); it.advance())
+					System.out.print(" " + ids.getOffset(it));
+				System.out.println();
+			}
+			++clusterId;
+		}
 		
-		int i = 0;
-		for (Cluster<Model> clu : c.getAllClusters())
-			if (clu.size() > 0)
-				System.out.println("Cluster #" + i++ + "\n  Size: " + clu.size() + "\n");
+		//Evaluate the clustering
+		System.out.println("Evaluating found clusters ...");
+		Clustering<Model> gdClustering = getGroundTruthClustering(data, numClusters, numPointsPerCluster);		
+		ClusteringAdjustedRandIndexSimilarityFunction ari = new ClusteringAdjustedRandIndexSimilarityFunction();
+		double similarity = ari.similarity(dbscanClustering, gdClustering);
+		System.out.println("ARI similarity to ground truth = " + similarity);
+		
+		
+		System.out.println("Finished.");
+	}
+	
+	private static Clustering<Model> getGroundTruthClustering(double[][] data, int numClusters, int numPointsPerCluster) {
+		
+		Clustering<Model> gdClustering = new Clustering<Model>("Ground truth", "gd");
+		SimpleDBIDFactory idFactory = new SimpleDBIDFactory();
+		
+		for (int i = 0; i < numClusters; i++) {
+			DBIDRange ids = idFactory.generateStaticDBIDRange(i * numPointsPerCluster, numPointsPerCluster);
+			Cluster<Model> gdCluster = new Cluster<Model>(Integer.toString(i), ids);
+			gdClustering.addToplevelCluster(gdCluster);
+		}		
+
+		return gdClustering;
 	}
 }

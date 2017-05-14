@@ -29,7 +29,7 @@ public class DataGenerator {
 	/**
 	 * Parameters
 	 */
-	static int numDimensions = 2;
+	static int numDimensions = 5;		//Number of dimensions generated for each type of clusters (gaussian and density)
 	static int numClusters = 2;
 	static int numPointsPerCluster = 1000;
 	static String spacingType = "s";
