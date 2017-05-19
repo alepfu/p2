@@ -21,14 +21,14 @@ import de.lmu.ifi.dbs.elki.index.tree.spatial.rstarvariants.rstar.RStarTreeFacto
 import de.lmu.ifi.dbs.elki.utilities.ClassGenericsUtil;
 import de.lmu.ifi.dbs.elki.utilities.optionhandling.parameterization.ListParameterization;
 
-public class RunDBSCAN {
+public class DBSCANRunner {
 
 	private static final String FILE = "data/merged.csv";
 	
 	public static void main(String[] args) {
 
 		//Load data and access header information
-		LoadDataUtil util = new LoadDataUtil(FILE);	
+		DataLoaderUtil util = new DataLoaderUtil(FILE);	
 		int numDimensions = util.getNumDimensions();
 		int numClusters = util.getNumClusters();
 		int numPointsPerCluster = util.getNumPointsPerCluster();
@@ -65,8 +65,8 @@ public class RunDBSCAN {
 			
 			//Since this DBSCAN implementation counts 0-element-clusters as clusters we have to count for ourself
 			nFoundClusters = 0;
-			for (Cluster<Model> clu : dbscanClustering.getAllClusters())
-				if (clu.size() > 0)
+			for (Cluster<Model> c : dbscanClustering.getAllClusters())
+				if (c.size() > 0)
 					++nFoundClusters;
 		
 		} while (nFoundClusters > numClusters);
@@ -89,6 +89,10 @@ public class RunDBSCAN {
 		ClusteringAdjustedRandIndexSimilarityFunction ari = new ClusteringAdjustedRandIndexSimilarityFunction();
 		double similarity = ari.similarity(dbscanClustering, gdClustering);
 		System.out.println("ARI similarity to ground truth = " + similarity);
+		
+		
+		
+		
 		
 		
 		System.out.println("Finished.");

@@ -20,14 +20,14 @@ import de.lmu.ifi.dbs.elki.distance.similarityfunction.cluster.ClusteringAdjuste
 import de.lmu.ifi.dbs.elki.utilities.ClassGenericsUtil;
 import de.lmu.ifi.dbs.elki.utilities.optionhandling.parameterization.ListParameterization;
 
-public class RunKMeans {
+public class KMeansRunner {
 
 	private static final String FILE = "data/merged.csv";
 	
 	public static void main(String[] args) {
 
 		//Load data and access header information
-		LoadDataUtil util = new LoadDataUtil(FILE);	
+		DataLoaderUtil util = new DataLoaderUtil(FILE);	
 		int numClusters = util.getNumClusters();
 		int numPointsPerCluster = util.getNumPointsPerCluster();
 		double[][] data = util.loadMergedData();
@@ -65,6 +65,11 @@ public class RunKMeans {
 		ClusteringAdjustedRandIndexSimilarityFunction ari = new ClusteringAdjustedRandIndexSimilarityFunction();
 		double similarity = ari.similarity(kMeansClustering, gdClustering);
 		System.out.println("ARI similarity to ground truth = " + similarity);
+		
+		
+		
+		
+		
 		
 		
 		

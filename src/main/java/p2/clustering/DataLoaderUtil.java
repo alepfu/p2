@@ -5,7 +5,7 @@ import java.io.FileReader;
 import java.util.HashMap;
 import java.util.Map;
 
-public class LoadDataUtil {
+public class DataLoaderUtil {
 	
 	private String file;
 	
@@ -14,7 +14,9 @@ public class LoadDataUtil {
 	private int numClusters;
 	private int numPoints;
 	
-	public LoadDataUtil(String file) {
+	private double[][] mergedData;
+	
+	public DataLoaderUtil(String file) {
 		
 		this.file = file;
 		
@@ -47,7 +49,10 @@ public class LoadDataUtil {
 
 	public double[][] loadMergedData() {
 		
-		double[][] data = new double[numPoints][numDimensions * 2];
+		if (mergedData != null)
+			return mergedData;
+		
+		mergedData = new double[numPoints][numDimensions * 2];
 		
 		try {
 			String line = "";
@@ -60,7 +65,7 @@ public class LoadDataUtil {
 					int id = Integer.parseInt(split[0]);
 					
 					for (int j = 0; j < (numDimensions * 2); j++)
-						data[id][j] = Double.parseDouble(split[j + 1]);
+						mergedData[id][j] = Double.parseDouble(split[j + 1]);
 				}
 			}
 
@@ -70,12 +75,13 @@ public class LoadDataUtil {
 			e.printStackTrace();
 		}
 		
-		return data;
+		return mergedData;
 	}
 	
 	public double[][] loadGaussianData() {
 		
-		double[][] mergedData = this.loadMergedData();
+		if (mergedData == null)
+			mergedData = this.loadMergedData();
 		
 		//Copy gaussian data points to double[][] array
 		double[][] gaussianData = new double[mergedData.length][numDimensions];
@@ -88,7 +94,8 @@ public class LoadDataUtil {
 	
 	public double[][] loadDensityData() {
 		
-		double[][] mergedData = this.loadMergedData();
+		if (mergedData == null)
+			mergedData = this.loadMergedData();
 		
 		//Copy density data points to double[][] array
 		double[][] densityData = new double[mergedData.length][numDimensions];
