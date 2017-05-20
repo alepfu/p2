@@ -79,8 +79,8 @@ public class DBSCANRunner {
 				for (DBIDIter it = c.getIDs().iter(); it.valid(); it.advance())
 					System.out.print(" " + ids.getOffset(it));
 				System.out.println();
+				++clusterId; 
 			}
-			++clusterId;
 		}
 		
 		//Evaluate the clustering
