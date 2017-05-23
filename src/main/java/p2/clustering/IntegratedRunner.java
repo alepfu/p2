@@ -2,6 +2,7 @@ package p2.clustering;
 
 import de.lmu.ifi.dbs.elki.algorithm.clustering.DBSCAN;
 import de.lmu.ifi.dbs.elki.algorithm.clustering.kmeans.KMeansMacQueen;
+import de.lmu.ifi.dbs.elki.algorithm.clustering.kmeans.initialization.RandomlyGeneratedInitialMeans;
 import de.lmu.ifi.dbs.elki.data.Cluster;
 import de.lmu.ifi.dbs.elki.data.Clustering;
 import de.lmu.ifi.dbs.elki.data.DoubleVector;
@@ -120,6 +121,9 @@ public class IntegratedRunner {
 	    ListParameterization kmeansParams = new ListParameterization();
 		kmeansParams.addParameter(KMeansMacQueen.K_ID, numClusters);
 		kmeansParams.addParameter(KMeansMacQueen.DISTANCE_FUNCTION_ID, EuclideanDistanceFunction.class);
+		
+		//TODO Test this
+		kmeansParams.addParameter(KMeansMacQueen.INIT_ID, RandomlyGeneratedInitialMeans.class);
 		
 		KMeansMacQueen<DoubleVector> kmeans = ClassGenericsUtil.parameterizeOrAbort(KMeansMacQueen.class, kmeansParams);
 		Clustering<KMeansModel> kmeansClustering = kmeans.run(gaussDB);

@@ -23,14 +23,14 @@ import org.jfree.data.xy.XYSeriesCollection;
 
 public class DataGenerator {
 	
-	static long seed = 30;
+	static long seed = 32;
 	static Random random = new Random(seed);
 	
 	/**
 	 * Parameters
 	 */
 	static int numDimensions = 2;		//Number of dimensions generated for each type of clusters (gaussian and density)
-	static int numClusters = 3;
+	static int numClusters = 2;
 	static int numPointsPerCluster = 300;
 	static String spacingType = "o";
 	static boolean isInconsistent = false;

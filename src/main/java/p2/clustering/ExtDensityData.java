@@ -7,6 +7,8 @@ public class ExtDensityData {
 	private double[][] data;
 	private double[][] dummy;
 	
+	//TODO In theory we don't need 2 separate ExtData classes, reduce to one
+	
 	public ExtDensityData(double[][] data, double[][] dummy) {
 		this.data = data;
 		this.dummy = dummy;
