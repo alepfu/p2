@@ -85,9 +85,9 @@ public class DBSCANRunner {
 		
 		//Evaluate the clustering
 		System.out.println("Evaluating found clusters ...");
-		Clustering<Model> gdClustering = getGroundTruthClustering(data, numClusters, numPointsPerCluster);		
+		Clustering<Model> gtClustering = getGroundTruthClustering(data, numClusters, numPointsPerCluster);		
 		ClusteringAdjustedRandIndexSimilarityFunction ari = new ClusteringAdjustedRandIndexSimilarityFunction();
-		double similarity = ari.similarity(dbscanClustering, gdClustering);
+		double similarity = ari.similarity(dbscanClustering, gtClustering);
 		System.out.println("ARI similarity to ground truth = " + similarity);
 		
 		
@@ -100,15 +100,15 @@ public class DBSCANRunner {
 	
 	private static Clustering<Model> getGroundTruthClustering(double[][] data, int numClusters, int numPointsPerCluster) {
 		
-		Clustering<Model> gdClustering = new Clustering<Model>("Ground truth", "gd");
+		Clustering<Model> gtClustering = new Clustering<Model>("Ground truth", "gd");
 		SimpleDBIDFactory idFactory = new SimpleDBIDFactory();
 		
 		for (int i = 0; i < numClusters; i++) {
 			DBIDRange ids = idFactory.generateStaticDBIDRange(i * numPointsPerCluster, numPointsPerCluster);
 			Cluster<Model> gdCluster = new Cluster<Model>(Integer.toString(i), ids);
-			gdClustering.addToplevelCluster(gdCluster);
+			gtClustering.addToplevelCluster(gdCluster);
 		}		
 
-		return gdClustering;
+		return gtClustering;
 	}
 }

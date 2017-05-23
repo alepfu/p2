@@ -33,19 +33,19 @@ public class ExtKMeansClustering {
 		int clusterId = 0;
 		for (Cluster<KMeansModel> c : clustering.getAllClusters()) {
 			sb.append("#" + clusterId + " [" + c.size() + "]");
-			for (DBIDIter it = c.getIDs().iter(); it.valid(); it.advance())
-				sb.append(" " + ids.getOffset(it));
+//			for (DBIDIter it = c.getIDs().iter(); it.valid(); it.advance())
+//				sb.append(" " + ids.getOffset(it));
 			sb.append("\n");
 			++clusterId;
 		}
 
-		sb.append("\nKMeans Dummy:\n");
-		for (int row = 0; row < dummy.length; row++) { 
-			String rowString = row + ": ";
-			for (int col = 0; col < dummy[row].length; col++)
-				rowString += dummy[row][col] + " ";
-			sb.append(rowString + "\n");
-		}
+//		sb.append("\nKMeans Dummy:\n");
+//		for (int row = 0; row < dummy.length; row++) { 
+//			String rowString = row + ": ";
+//			for (int col = 0; col < dummy[row].length; col++)
+//				rowString += dummy[row][col] + " ";
+//			sb.append(rowString + "\n");
+//		}
 		
 		return sb.toString();
 	}

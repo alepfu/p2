@@ -61,9 +61,9 @@ public class KMeansRunner {
 		
 		//Evaluate the clustering
 		System.out.println("Evaluating found clusters ...");
-		Clustering<KMeansModel> gdClustering = getGroundTruthClustering(data, numClusters, numPointsPerCluster);		
+		Clustering<KMeansModel> gtClustering = getGroundTruthClustering(data, numClusters, numPointsPerCluster);		
 		ClusteringAdjustedRandIndexSimilarityFunction ari = new ClusteringAdjustedRandIndexSimilarityFunction();
-		double similarity = ari.similarity(kMeansClustering, gdClustering);
+		double similarity = ari.similarity(kMeansClustering, gtClustering);
 		System.out.println("ARI similarity to ground truth = " + similarity);
 		
 		
@@ -78,16 +78,16 @@ public class KMeansRunner {
 	
 	private static Clustering<KMeansModel> getGroundTruthClustering(double[][] data, int numClusters, int numPointsPerCluster) {
 		
-		Clustering<KMeansModel> gdClustering = new Clustering<KMeansModel>("Ground truth", "gd");
+		Clustering<KMeansModel> gtClustering = new Clustering<KMeansModel>("Ground truth", "gd");
 		SimpleDBIDFactory idFactory = new SimpleDBIDFactory();
 		
 		for (int i = 0; i < numClusters; i++) {
 			DBIDRange ids = idFactory.generateStaticDBIDRange(i * numPointsPerCluster, numPointsPerCluster);
 			Cluster<KMeansModel> gdCluster = new Cluster<KMeansModel>(Integer.toString(i), ids);
-			gdClustering.addToplevelCluster(gdCluster);
+			gtClustering.addToplevelCluster(gdCluster);
 		}		
 
-		return gdClustering;
+		return gtClustering;
 	}
 
 }

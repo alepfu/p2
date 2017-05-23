@@ -14,9 +14,12 @@ import de.lmu.ifi.dbs.elki.database.Database;
 import de.lmu.ifi.dbs.elki.database.StaticArrayDatabase;
 import de.lmu.ifi.dbs.elki.database.ids.DBIDIter;
 import de.lmu.ifi.dbs.elki.database.ids.DBIDRange;
+import de.lmu.ifi.dbs.elki.database.ids.integer.SimpleDBIDFactory;
 import de.lmu.ifi.dbs.elki.database.relation.Relation;
 import de.lmu.ifi.dbs.elki.datasource.ArrayAdapterDatabaseConnection;
 import de.lmu.ifi.dbs.elki.distance.distancefunction.minkowski.EuclideanDistanceFunction;
+import de.lmu.ifi.dbs.elki.distance.similarityfunction.cluster.ClusteringAdjustedRandIndexSimilarityFunction;
+import de.lmu.ifi.dbs.elki.distance.similarityfunction.cluster.ClusteringRandIndexSimilarityFunction;
 import de.lmu.ifi.dbs.elki.index.tree.spatial.rstarvariants.rstar.RStarTreeFactory;
 import de.lmu.ifi.dbs.elki.utilities.ClassGenericsUtil;
 import de.lmu.ifi.dbs.elki.utilities.optionhandling.parameterization.ListParameterization;
@@ -29,20 +32,41 @@ public class IntegratedRunner {
 	private int numPoints;
 	private double[][] dataGauss;
 	private double[][] dataDensity;
+	
+	private Clustering<Model> gtClustering;	
 
 	public static void main(String[] args) {
 		
 		IntegratedRunner runner = new IntegratedRunner("data/merged.csv");
 		
-		//Start of with KMeans
-		ExtGaussData extDataGauss = new ExtGaussData(runner.dataGauss, null);  //1st run has no dummy information yet
-		ExtKMeansClustering extKMeansClustering = runner.runKMeans(extDataGauss);  
+		int steps = 3;
+		ExtGaussData extDataGauss;
+		ExtDensityData extDensityData;
+		ExtKMeansClustering extKMeansClustering;
+		ExtDBSCANClustering extDBSCANClustering = null;
 		
-		//Do DBSCAN with data extended by the KMeans cluster label dummy encoding
-		ExtDensityData extDensityData = new ExtDensityData(runner.dataDensity, extKMeansClustering.getDummy());
-		ExtDBSCANClustering extDBSCANClustering = runner.runDBSCAN(extDensityData);
+//		ClusteringAdjustedRandIndexSimilarityFunction simARI = new ClusteringAdjustedRandIndexSimilarityFunction();
 		
-		//TODO implement loop, do DBSCAN and KMeans alternatly until convergence
+		for(int step = 0; step < steps; step++) {
+
+			System.out.println("##### Iteration " + (step + 1) + " of " + steps);
+			
+			//KMeans
+			if (step == 0)
+				extDataGauss = new ExtGaussData(runner.dataGauss, null);  //1st run has no dummy information yet
+			else 
+				extDataGauss = new ExtGaussData(runner.dataGauss, extDBSCANClustering.getDummy());  			
+			extKMeansClustering = runner.runKMeans(extDataGauss);  
+			
+//			System.out.println("Similarity to ground truth = " + simARI.similarity(extKMeansClustering.getClustering(), runner.gtClustering) + "\n");
+			
+			//DBSCAN
+			extDensityData = new ExtDensityData(runner.dataDensity, extKMeansClustering.getDummy());
+			extDBSCANClustering = runner.runDBSCAN(extDensityData);
+			
+//			System.out.println("Similarity to ground truth = " + simARI.similarity(extDBSCANClustering.getClustering(), runner.gtClustering) + "\n");
+		}
+		
 		
 	}
 	
@@ -61,6 +85,21 @@ public class IntegratedRunner {
 		numPoints = numClusters * numPointsPerCluster;
 		dataGauss = dataUtil.loadGaussianData();
 		dataDensity = dataUtil.loadDensityData();
+		
+		gtClustering = getGroundTruthClustering(dataUtil.loadMergedData(), numClusters, numPointsPerCluster);
+		
+		StringBuilder sb = new StringBuilder();
+		sb.append("Ground Truth Clustering:\n");
+		int clusterId = 0;
+		for (Cluster<Model> c : gtClustering.getAllClusters()) {
+			if (c.size() > 0) {
+				sb.append("#" + clusterId + " [" + c.size() + "]");
+				sb.append("\n");
+				++clusterId;
+			}
+		}
+		System.out.println(sb);
+		
 	}
 	
 	/**
@@ -155,6 +194,20 @@ public class IntegratedRunner {
 		System.out.println(extClustering);
 		
 		return extClustering;
+	}
+	
+	private Clustering<Model> getGroundTruthClustering(double[][] data, int numClusters, int numPointsPerCluster) {
+		
+		Clustering<Model> gdClustering = new Clustering<Model>("Ground truth", "gd");
+		SimpleDBIDFactory idFactory = new SimpleDBIDFactory();
+		
+		for (int i = 0; i < numClusters; i++) {
+			DBIDRange ids = idFactory.generateStaticDBIDRange(i * numPointsPerCluster, numPointsPerCluster);
+			Cluster<Model> gdCluster = new Cluster<Model>(Integer.toString(i), ids);
+			gdClustering.addToplevelCluster(gdCluster);
+		}		
+
+		return gdClustering;
 	}
 
 }
