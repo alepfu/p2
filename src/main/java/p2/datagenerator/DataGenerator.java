@@ -23,17 +23,16 @@ import org.jfree.data.xy.XYSeriesCollection;
 
 public class DataGenerator {
 	
-	static long seed = 32;
+	static long seed = 1234567;
 	static Random random = new Random(seed);
 	
 	/**
 	 * Parameters
 	 */
 	static int numDimensions = 2;		//Number of dimensions generated for each type of clusters (gaussian and density)
-	static int numClusters = 2;
-	static int numPointsPerCluster = 300;
+	static int numClusters = 3;
+	static int numPointsPerCluster = 500;
 	static String spacingType = "o";
-	static boolean isInconsistent = false;
 	
 	public static void main(String[] args) {
 		
@@ -43,7 +42,6 @@ public class DataGenerator {
 		options.addOption("c", "num-clusters", true, "Number of clusters.");
 		options.addOption("p", "num-points-per-cluster", true, "Number of points per cluster.");
 		options.addOption("s", "spacing", true, "[s] separated, [o] overlapping");
-		options.addOption("i", "inconsistent", false, "Generates an inconsitent data set");
 		
 		try {
 			CommandLine line = parser.parse(options, args);
@@ -60,8 +58,8 @@ public class DataGenerator {
 			if (line.hasOption("s")) {				
 				spacingType = line.getOptionValue("s");
 				
-				if (!(spacingType.equals("s") || spacingType.equals("o") || spacingType.equals("i")))
-					throw new ParseException("Spacing type must be one of s|o|i.");
+				if (!(spacingType.equals("s") || spacingType.equals("o") ))
+					throw new ParseException("Spacing type must be 's' or 'o'.");
 			}
 			
 		} catch (ParseException e) {
@@ -107,7 +105,7 @@ public class DataGenerator {
 		if (spacingType.equals("s"))
 			deviation = 0.01;
 		else if (spacingType.equals("o"))
-			deviation = 0.06;
+			deviation = 0.1;  //TODO taylored to seed 1234567 with 2 dimensions and 3 clusters with each 1000 points
 		
 		double[] mean = new double[numDimensions];
 		
@@ -134,7 +132,7 @@ public class DataGenerator {
 		if (spacingType.equals("s"))
 			spacing = numPointsPerCluster * epsilon;
 		else if (spacingType.equals("o"))
-			spacing = epsilon;
+			spacing = numPointsPerCluster * epsilon * 0.035;  //TODO taylored to seed 1234567 with 2 dimensions and 3 clusters with each 1000 points
 		
 		List<double[]> densityDataPoints = new ArrayList<double[]>();
 		
@@ -147,7 +145,7 @@ public class DataGenerator {
 	
 			//Apply spacing
 			for (int j = 0; j < numDimensions; j++) 
-				firstPoint[j] = firstPoint[j] + (random.nextDouble() * epsilon * spacing * (random.nextBoolean() ? 1 : -1));
+				firstPoint[j] = firstPoint[j] + (random.nextDouble() * epsilon * spacing);
 		}
 		
 		return densityDataPoints;
@@ -208,8 +206,7 @@ public class DataGenerator {
 			writer.write("#numClusters=" + numClusters + "\n" +
 						 "#numDimensions=" + numDimensions + "\n" +
 						 "#numPointsPerCluster=" + numPointsPerCluster + "\n" +
-						 "#spacingType=" + spacingType + "\n" +
-						 "#isInconsistent=" + isInconsistent + "\n");
+						 "#spacingType=" + spacingType + "\n");
 			
 			for (MergedDataPoint p : dataPoints) {
 				writer.write(p.toString());

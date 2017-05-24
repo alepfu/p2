@@ -51,18 +51,17 @@ public class ExtDensityData {
 			for (int col = numColsData; col < numColsConcat; col++)
 				extData[row][col] = dummy[row][col - numColsData];		
 		
-		/*
-		NumberFormat nf = NumberFormat.getInstance();
+		//DEBUG: print data with normalized dummy encoding attached
+		/*NumberFormat nf = NumberFormat.getInstance();
 		nf.setMinimumFractionDigits(2);
 		nf.setMaximumFractionDigits(2);
-		StringBuilder b = new StringBuilder("Extended Density Data:\n");
+		StringBuilder log = new StringBuilder("Extended Density Data:\n");
 		for (int row = 0; row < numRows; row++) {
 			for (int col = 0; col < numColsConcat; col++)
-				b.append(nf.format(extData[row][col]) + " ");
-			b.append("\n");
+				log.append(nf.format(extData[row][col]) + " ");
+			log.append("\n");
 		}
-		System.out.println(b);
-		*/
+		System.out.println(log);*/
 		
 		return extData;
 	}

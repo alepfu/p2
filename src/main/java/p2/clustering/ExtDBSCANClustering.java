@@ -16,6 +16,32 @@ public class ExtDBSCANClustering {
 		this.clustering = clustering;
 		this.dummy = dummy;
 		this.ids = ids;
+		
+		//DEBUG: log clustering
+		StringBuilder log = new StringBuilder();
+		log.append("DBSCAN Clustering:\n");
+		int clusterId = 0;
+		for (Cluster<Model> c : clustering.getAllClusters()) {
+			if (c.size() > 0) {
+				log.append("#" + clusterId + " [" + c.size() + "]");
+				for (DBIDIter it = c.getIDs().iter(); it.valid(); it.advance())
+					log.append(" " + ids.getOffset(it));
+				log.append("\n");
+				++clusterId;
+			}
+		}
+		System.out.println(log);
+		
+		//DEBUG: log dummy encoding
+		/*log = new StringBuilder();
+		log.append("\nDBSCAN Dummy:\n");
+		for (int row = 0; row < dummy.length; row++) { 
+			String rowString = row + ": ";
+			for (int col = 0; col < dummy[row].length; col++)
+				rowString += dummy[row][col] + " ";
+			log.append(rowString + "\n");
+		}
+		System.out.println(log);*/
 	}
 
 	public Clustering<Model> getClustering() {
@@ -24,31 +50,5 @@ public class ExtDBSCANClustering {
 
 	public double[][] getDummy() {
 		return dummy;
-	}
-
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		
-		sb.append("DBSCAN Clustering:\n");
-		int clusterId = 0;
-		for (Cluster<Model> c : clustering.getAllClusters()) {
-			if (c.size() > 0) {
-				sb.append("#" + clusterId + " [" + c.size() + "]");
-//				for (DBIDIter it = c.getIDs().iter(); it.valid(); it.advance())
-//					sb.append(" " + ids.getOffset(it));
-				sb.append("\n");
-				++clusterId;
-			}
-		}
-
-//		sb.append("\nDBSCAN Dummy:\n");
-//		for (int row = 0; row < dummy.length; row++) { 
-//			String rowString = row + ": ";
-//			for (int col = 0; col < dummy[row].length; col++)
-//				rowString += dummy[row][col] + " ";
-//			sb.append(rowString + "\n");
-//		}
-		
-		return sb.toString();
 	}
 }

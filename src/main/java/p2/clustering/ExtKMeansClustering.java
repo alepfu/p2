@@ -16,6 +16,30 @@ public class ExtKMeansClustering {
 		this.clustering = clustering;
 		this.dummy = dummy;
 		this.ids = ids;
+		
+		//DEBUG: log the clustering
+		StringBuilder log = new StringBuilder();
+		log.append("KMeans Clustering:\n");
+		int clusterId = 0;
+		for (Cluster<KMeansModel> c : clustering.getAllClusters()) {
+			log.append("#" + clusterId + " [" + c.size() + "]");
+			for (DBIDIter it = c.getIDs().iter(); it.valid(); it.advance())
+				log.append(" " + ids.getOffset(it));
+			log.append("\n");
+			++clusterId;
+		}
+		System.out.println(log);
+
+		//DEBUG: log dummy encoding
+		/*log = new StringBuilder();
+		log.append("\nKMeans Dummy:\n");
+		for (int row = 0; row < dummy.length; row++) { 
+			String rowString = row + ": ";
+			for (int col = 0; col < dummy[row].length; col++)
+				rowString += dummy[row][col] + " ";
+			log.append(rowString + "\n");
+		}
+		System.out.println(log);*/
 	}
 
 	public Clustering<KMeansModel> getClustering() {
@@ -24,29 +48,5 @@ public class ExtKMeansClustering {
 
 	public double[][] getDummy() {
 		return dummy;
-	}
-
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		
-		sb.append("KMeans Clustering:\n");
-		int clusterId = 0;
-		for (Cluster<KMeansModel> c : clustering.getAllClusters()) {
-			sb.append("#" + clusterId + " [" + c.size() + "]");
-//			for (DBIDIter it = c.getIDs().iter(); it.valid(); it.advance())
-//				sb.append(" " + ids.getOffset(it));
-			sb.append("\n");
-			++clusterId;
-		}
-
-//		sb.append("\nKMeans Dummy:\n");
-//		for (int row = 0; row < dummy.length; row++) { 
-//			String rowString = row + ": ";
-//			for (int col = 0; col < dummy[row].length; col++)
-//				rowString += dummy[row][col] + " ";
-//			sb.append(rowString + "\n");
-//		}
-		
-		return sb.toString();
 	}
 }
