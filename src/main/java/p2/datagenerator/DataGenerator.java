@@ -23,26 +23,54 @@ import org.jfree.data.xy.XYSeriesCollection;
 
 public class DataGenerator {
 	
-	static long seed = 1234567;
+	/**
+	 * Seed for random number generation
+	 */
+	static long seed = 12345;
+	
+	/**
+	 * Random number generator.
+	 */
 	static Random random = new Random(seed);
 	
 	/**
-	 * Parameters
+	 * Number of dimensions generated for each cluster type (gaussian and density).
 	 */
-	static int numDimensions = 2;		//Number of dimensions generated for each type of clusters (gaussian and density)
-	static int numClusters = 3;
-	static int numPointsPerCluster = 500;
-	static String spacingType = "o";
+	static int numDimensions = 2;
 	
+	/**
+	 * Number of clusters to be generated.
+	 */
+	static int numClusters = 5;
+	
+	/**
+	 * Number of generated points per cluster, meaningful values range from 100 to 1,000,000. 
+	 */
+	static int numPointsPerCluster = 10000;
+	
+	/**
+	 * Flag indicating if cluster are overlapping or not.
+	 */
+	static boolean overlapping = false;
+	
+	/**
+	 * Main method making use of command line arguments.
+	 * Generates data points and exports them to a file.
+	 * Generates 2D scatter plots for each cluster type.
+	 * @param args
+	 */
 	public static void main(String[] args) {
 		
+		//Initialze argument parser
 		CommandLineParser parser = new DefaultParser();
 		Options options = new Options();
 		options.addOption("d", "num-dimensions", true, "Number of dimensions.");
 		options.addOption("c", "num-clusters", true, "Number of clusters.");
 		options.addOption("p", "num-points-per-cluster", true, "Number of points per cluster.");
-		options.addOption("s", "spacing", true, "[s] separated, [o] overlapping");
+		options.addOption("o", "overlap", false, "Overlapping clusters");
+		options.addOption("s", "seed", true, "Seed for random number generation.");
 		
+		//Parse arguments
 		try {
 			CommandLine line = parser.parse(options, args);
 			
@@ -55,28 +83,30 @@ public class DataGenerator {
 			if (line.hasOption("p"))	
 				numPointsPerCluster = Integer.parseInt(line.getOptionValue("p"));
 			
-			if (line.hasOption("s")) {				
-				spacingType = line.getOptionValue("s");
-				
-				if (!(spacingType.equals("s") || spacingType.equals("o") ))
-					throw new ParseException("Spacing type must be 's' or 'o'.");
-			}
+			if (line.hasOption("o"))				
+				overlapping = true;
+			
+			if (line.hasOption("s"))	
+				seed = Integer.parseInt(line.getOptionValue("s"));
 			
 		} catch (ParseException e) {
 			System.out.println( "Error on parsing command line arguments.");
 			e.printStackTrace();
 		}
 		
-		System.out.println("Generate gaussian clusters ...");
-		List<double[]> gaussianDataPoints = generateGaussianClusters();
+		//Generate gaussian data points
+		List<double[]> gaussianDataPoints = getGaussianClusters(); 
 		
-		System.out.println("Generate density-based clusters ...");
-		List<double[]> densityDataPoints = generateDensityClusters();
+		//Generate densitiy data points
+		List<double[]> densityDataPoints = getDensityClusters();
 		
-		System.out.println("Merge data points together ...");
+		//Merge data points together
 		List<MergedDataPoint> mergedDataPoints = mergeDataPoints(gaussianDataPoints, densityDataPoints);
+		
+		//Export data points to file
 		saveDataPointsToFile(mergedDataPoints, "data/merged.csv");
 		
+		//Plotting
 		try {
 			plot(mergedDataPoints, true);
 		} catch (Exception e) {
@@ -85,53 +115,126 @@ public class DataGenerator {
 		
 		System.out.println("Finished.");
 	}
+	
+	/**
+	 * Generates the data points for the gaussian clusters.
+	 * Standard deviations of clusters are choosen randomly.
+	 * The 1st cluster is positioned at the origin.
+	 * Separation of clusters is handeld by a multiple of the standard deviation (68–95–99.7 rule). 
+	 * @return A list of data points, where a data point is a double[] with size numDimensions.
+	 */
+	private static List<double[]> getGaussianClusters() {
+		
+		System.out.println("Generate gaussian clusters ...");
+		
+		List<double[]> points = new ArrayList<double[]>(numClusters*numPointsPerCluster);
+		
+		double mean = 0;  //The 1st cluster is positioned at the origin
+		double deviation = random.nextDouble();
+		
+		int numPoints = numClusters * numPointsPerCluster;
+		
+		//Get the needed factor for the separation of clusters
+		double factor = 3;
+		if (numPoints >= 1000000)
+			factor = 5;
+		if ((1000000 > numPoints) && (numPoints >= 100000))
+			factor = 4.5;
+		if ((100000 > numPoints) && (numPoints >= 10000))
+			factor = 4;
+		if ((10000 > numPoints) && (numPoints >= 1000))
+			factor = 3.5;
+		
+		//For overlapping clusters we just cut factor in half
+		if (overlapping)
+			factor /= 2;
 
-	private static List<double[]> generateGaussianClusters() {
+		//Generate data points
+		for (int i = 0; i < numClusters; i++) {
+			
+			for (int j = 0; j < numPointsPerCluster; j++) {
+			
+				double[] point = new double[numDimensions];
+				
+				for (int k = 0; k < numDimensions; k++) 
+					point[k] = random.nextGaussian() * deviation + mean;
+				
+				points.add(point);
+			}
+			
+			//Set deviation and mean for the next cluster
+			double prevDeviation = deviation;
+			deviation = random.nextDouble();
+			mean += (prevDeviation + deviation) * factor;
+		}
 		
-		List<double[]> gaussianDataPoints = new ArrayList<double[]>();
-		
-		for (int i = 0; i < numClusters; i++)
-			gaussianDataPoints.addAll(getGaussianCluster());
-		
-		return gaussianDataPoints;
+		return points;
 	}
 	
-	private static List<double[]> getGaussianCluster() {
+	/**
+	 * NEW METHOD
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * @return
+	 */
+	private static List<double[]> getDensityClusters() {
 		
-		List<double[]> cluster = new ArrayList<double[]>();
+		System.out.println("Generate density clusters ...");
 		
-		double deviation = 0;
+		double epsilon = 1.0;
+		double space = 3 * epsilon;
 		
-		if (spacingType.equals("s"))
-			deviation = 0.01;
-		else if (spacingType.equals("o"))
-			deviation = 0.1;  //TODO taylored to seed 1234567 with 2 dimensions and 3 clusters with each 1000 points
 		
-		double[] mean = new double[numDimensions];
+		List<double[]> points = new ArrayList<double[]>(numClusters*numPointsPerCluster);
 		
-		for (int j = 0; j < numDimensions; j++) 
-			mean[j] = random.nextDouble();
+		double[] firstPoint = new double[numDimensions];
+		Arrays.fill(firstPoint, 0);
 		
-		for (int x = 0; x < numPointsPerCluster; x++) {
-
-			double[] dataPoint = new double[numDimensions];
-			for (int k = 0; k < numDimensions; k++) 
-				dataPoint[k] = random.nextGaussian() * deviation + mean[k];
+		for (int i = 0; i < numClusters; i++) {
 			
-			cluster.add(dataPoint);
-		}
+			points.add(firstPoint);
+			
+			for (int j = 1; j < numPointsPerCluster; j++) {
 
-		return cluster;
+				
+				//TODO wir müssen uns von Punkt zu Punkt handeln und nicht immer nur vom ersten weg!
+				
+				double[] point = new double[numDimensions];
+				double val = epsilon * random.nextDouble();
+				Arrays.fill(point, val);
+				point[0] = (space * i) + val + random.nextDouble();
+				
+				points.add(point);
+			}
+		
+			firstPoint = new double[numDimensions];
+			Arrays.fill(firstPoint, 0);
+			firstPoint[0] = space * (i + 1);
+		}
+		
+		
+		
+		return points;
 	}
+	
+	
+	
+	
+	
 	
 	private static List<double[]> generateDensityClusters() {
+		System.out.println("Generate density-based clusters ...");
+		
 		double epsilon = 1.0;		
 		
-		double spacing = 0;
+		double spacing = numPointsPerCluster * epsilon;
 		
-		if (spacingType.equals("s"))
-			spacing = numPointsPerCluster * epsilon;
-		else if (spacingType.equals("o"))
+		if (overlapping)
 			spacing = numPointsPerCluster * epsilon * 0.035;  //TODO taylored to seed 1234567 with 2 dimensions and 3 clusters with each 1000 points
 		
 		List<double[]> densityDataPoints = new ArrayList<double[]>();
@@ -176,12 +279,13 @@ public class DataGenerator {
 	
 	/**
 	 * Merges sets of gaussian and density data points together, adding point and cluster ids to every row.
-	 * 
 	 * @param gaussianDataPoints
 	 * @param densityDataPoints
 	 * @return List of MergedDataPoint
 	 */
 	private static List<MergedDataPoint> mergeDataPoints(List<double[]> gaussianDataPoints, List<double[]> densityDataPoints) {
+		
+		System.out.println("Merge data points together ...");
 		
 		List<MergedDataPoint> dataPoints = new ArrayList<MergedDataPoint>();
 		int numPoints = numClusters * numPointsPerCluster;
@@ -198,7 +302,16 @@ public class DataGenerator {
 		return dataPoints;
 	}
 	
+	/**
+	 * Exports data points to file.
+	 * Adds header information.
+	 * @param dataPoints A list of data points.
+	 * @param file A filename.
+	 */
 	private static void saveDataPointsToFile(List<MergedDataPoint> dataPoints, String file) {
+		
+		System.out.println("Export data points to file ...");
+		
 		try {
 			BufferedWriter writer = new BufferedWriter(new FileWriter(file));
 			
@@ -206,7 +319,7 @@ public class DataGenerator {
 			writer.write("#numClusters=" + numClusters + "\n" +
 						 "#numDimensions=" + numDimensions + "\n" +
 						 "#numPointsPerCluster=" + numPointsPerCluster + "\n" +
-						 "#spacingType=" + spacingType + "\n");
+						 "#spacingType=" + overlapping + "\n");
 			
 			for (MergedDataPoint p : dataPoints) {
 				writer.write(p.toString());
@@ -221,8 +334,6 @@ public class DataGenerator {
 	
 	/**
 	 * Generates and displays scatter plots for the gaussian and density clusters.
-	 * Only useful for 2D data points.
-	 * 
 	 * @param mergedDataPoints The full set of generated data points with point and cluster ids.
 	 * @param showPlot Wether the generated plot image should be shown or not.
 	 */
