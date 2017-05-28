@@ -35,7 +35,7 @@ public class IntegratedRunner {
 
 	public static void main(String[] args) {
 		
-		IntegratedRunner runner = new IntegratedRunner("data/merged.csv");
+		IntegratedRunner runner = new IntegratedRunner("data/datapoints.csv");
 		
 		ExtGaussData extDataGauss;
 		ExtDensityData extDensityData;
@@ -154,8 +154,8 @@ public class IntegratedRunner {
 	    //Successively increase epsilon until DBSCAN finds k clusters. 
 		double stepsize = 0.1;
 		int nFoundClusters = 0;
-		int minPts = (2 * numDimensions - 1) * 2;
-		double epsilon = 1.0 * (numDimensions / 2.0);
+		int minPts = 2 * numDimensions - 1;		//As suggested by Elki
+		double epsilon = 1.0;					//TODO ist this a good idea?
 		Clustering<Model> dbscanClustering;
 		do {
 			ListParameterization dbscanParams = new ListParameterization();

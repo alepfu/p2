@@ -23,7 +23,7 @@ import de.lmu.ifi.dbs.elki.utilities.optionhandling.parameterization.ListParamet
 
 public class DBSCANRunner {
 
-	private static final String FILE = "data/merged.csv";
+	private static final String FILE = "data/datapoints.csv";
 	
 	public static void main(String[] args) {
 

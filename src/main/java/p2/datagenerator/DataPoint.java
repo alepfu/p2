@@ -2,14 +2,14 @@ package p2.datagenerator;
 
 import java.util.Arrays;
 
-public class MergedDataPoint {
+public class DataPoint {
 	
 	double[] gaussFeatures;
 	double[] densityFeatures;
 	int id;
 	int clusterId;
 	
-	public MergedDataPoint(double[] gaussFeatures, double[] densityFeatures, int id, int clusterId) {
+	public DataPoint(double[] gaussFeatures, double[] densityFeatures, int id, int clusterId) {
 		
 		this.gaussFeatures = gaussFeatures;
 		this.densityFeatures = densityFeatures;
