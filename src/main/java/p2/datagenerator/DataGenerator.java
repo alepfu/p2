@@ -181,14 +181,10 @@ public class DataGenerator {
 	}
 	
 	/**
-	 * DRAUF GESCHISSEN
-	 * 
-	 * ICH MACH DAS NICHT MEHR GSCHEIT !!!!!
-	 * 
-	 * SOLL HEISSEN EIN RICHTIGES OVERLAPPING GIBTS NUR BEIM GAUS,
-	 * BEIM DBSCAN LÖSE ICH DAS SPACING BRUTE FORCE UND PASSE DIE PARAMETER DEMENTSPRECHEND AN !!!!!!!
-	 * 
-	 * 
+	 * Generates data points for density-connected clusters.
+	 * Generates some core points with a random walk, then sets remaining points arround the core points.
+	 * The first random walk starts at the origin.
+	 * Separation of clusters is handeld by a fixed spacing. 
 	 * @return
 	 */
 	private static List<double[]> getDensityClusters() {
@@ -213,13 +209,6 @@ public class DataGenerator {
 			if (i == 0) {
 				Arrays.fill(point, 0);
 			} else {
-				
-				/*
-				double x = random.nextDouble();
-				int direction = -1;
-				if (x > 0.25)
-					direction = 1;
-				*/
 
 				int direction = random.nextBoolean() ? 1 : -1;
 				
