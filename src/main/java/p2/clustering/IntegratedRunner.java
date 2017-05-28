@@ -35,7 +35,7 @@ public class IntegratedRunner {
 
 	public static void main(String[] args) {
 		
-		IntegratedRunner runner = new IntegratedRunner("data/datapoints.csv");
+		IntegratedRunner runner = new IntegratedRunner("/home/alepfu/Desktop/P2_export/data_1496004163759.csv");
 		
 		ExtGaussData extDataGauss;
 		ExtDensityData extDensityData;
@@ -53,7 +53,7 @@ public class IntegratedRunner {
 		System.out.println(runner.evaluateClustering(extDBSCANClustering.getClustering()));
 		
 		//KMeans
-		extDataGauss = new ExtGaussData(runner.dataGauss, extDBSCANClustering.getDummy());
+		/*		extDataGauss = new ExtGaussData(runner.dataGauss, extDBSCANClustering.getDummy());
 		extKMeansClustering = runner.runKMeans(extDataGauss);
 		System.out.println(runner.evaluateClustering(extKMeansClustering.getClustering()));
 		
@@ -61,7 +61,7 @@ public class IntegratedRunner {
 		extDensityData = new ExtDensityData(runner.dataDensity, extKMeansClustering.getDummy());
 		extDBSCANClustering = runner.runDBSCAN(extDensityData);
 		System.out.println(runner.evaluateClustering(extDBSCANClustering.getClustering()));
-		
+*/		
 		
 		System.out.println("Finished.");
 	}
@@ -82,7 +82,7 @@ public class IntegratedRunner {
 		dataGauss = dataUtil.loadGaussianData();
 		dataDensity = dataUtil.loadDensityData();
 		
-		gtClustering = getGroundTruthClustering(dataUtil.loadMergedData(), numClusters, numPointsPerCluster);
+		gtClustering = getGroundTruthClustering(numClusters, numPointsPerCluster);
 		
 		//DEBUG: log ground truth clustering
 		StringBuilder log = new StringBuilder();
@@ -155,7 +155,7 @@ public class IntegratedRunner {
 		double stepsize = 0.1;
 		int nFoundClusters = 0;
 		int minPts = 2 * numDimensions - 1;		//As suggested by Elki
-		double epsilon = 1.0;					//TODO ist this a good idea?
+		double epsilon = 1.0;					//TODO Is this a good idea? Start big/small?
 		Clustering<Model> dbscanClustering;
 		do {
 			ListParameterization dbscanParams = new ListParameterization();
@@ -174,6 +174,8 @@ public class IntegratedRunner {
 
 		} while (nFoundClusters > numClusters);
 		
+		//System.out.println("Epsilon = " + epsilon);
+		
 		double[][] dbscanDummy = new double[numPoints][numClusters];
 		
 		int clusterID = 0;
@@ -190,7 +192,16 @@ public class IntegratedRunner {
 		return extClustering;
 	}
 	
-	private Clustering<Model> getGroundTruthClustering(double[][] data, int numClusters, int numPointsPerCluster) {
+	/**
+	 * Generates the ground truth clustering.
+	 * Use for evaluation of clusterings.
+	 * With knowing the number of clusters and the number of points per cluster, this reduces to a
+	 * simple numbering procedure.
+	 * @param numClusters The number of clusters.
+	 * @param numPointsPerCluster The number of points per cluster.
+	 * @return The ground truth clustering.
+	 */
+	private Clustering<Model> getGroundTruthClustering(int numClusters, int numPointsPerCluster) {
 		
 		Clustering<Model> gdClustering = new Clustering<Model>("Ground truth", "gd");
 		SimpleDBIDFactory idFactory = new SimpleDBIDFactory();
@@ -204,14 +215,17 @@ public class IntegratedRunner {
 		return gdClustering;
 	}
 	
-	private double evaluateClustering(Clustering c) {
-		ClusterContingencyTable cct = new ClusterContingencyTable(false, false);
-		cct.process(gtClustering,  c);
+	/**
+	 * Compares a clustering with the ground truth clutering.
+	 * @param c Clustering to compare to ground truth
+	 * @return The mutual information measure
+	 */
+	private double evaluateClustering(Clustering<?> c) {
 		
-		System.out.println(cct);
+		ClusterContingencyTable table = new ClusterContingencyTable(false, false);
+		table.process(gtClustering,  c);
 		
-		Entropy measure = new Entropy(cct);
-		return measure.entropyMutualInformation();
+		return new Entropy(table).normalizedVariationOfInformation();
 	}
 
 }

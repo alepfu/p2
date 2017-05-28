@@ -26,13 +26,13 @@ public class DataGenerator {
 	/**
 	 * Seed for random number generation
 	 */
-	static long seed = 12345;
+	static long seed = 7;
 	
 	/**
 	 * Random number generator.
 	 */
-	//static Random random = new Random(seed);
-	static Random random = new Random();  //seedless
+	static Random random = new Random(seed);
+	//static Random random = new Random();  //seedless
 	
 	/**
 	 * Number of dimensions generated for each cluster type (gaussian and density).
@@ -52,12 +52,14 @@ public class DataGenerator {
 	/**
 	 * Flag indicating if cluster are overlapping or not.
 	 */
-	static boolean overlapping = false;
+	static boolean overlapping = true;
 	
 	/**
-	 * Filename for exporting data points.
+	 * Directory for exported files.
 	 */
-	static String filename = "data/datapoints.csv";
+	static String exportDir = "/home/alepfu/Desktop/P2_export";
+	
+	
 	
 	/**
 	 * Main method making use of command line arguments.
@@ -66,6 +68,8 @@ public class DataGenerator {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		
+		Long timeStart = System.currentTimeMillis();
 		
 		//Initialze argument parser
 		CommandLineParser parser = new DefaultParser();
@@ -76,7 +80,7 @@ public class DataGenerator {
 		options.addOption("o", "overlap", false, "Overlapping clusters");
 		options.addOption("s", "seed", true, "Seed for random number generation.");
 		
-		//TODO add filename as parameter
+		//TODO add export dir as parameter
 		
 		//Parse arguments
 		try {
@@ -94,8 +98,10 @@ public class DataGenerator {
 			if (line.hasOption("o"))				
 				overlapping = true;
 			
-			if (line.hasOption("s"))	
+			if (line.hasOption("s")) {
 				seed = Integer.parseInt(line.getOptionValue("s"));
+				random = new Random(seed);
+			}
 			
 		} catch (ParseException e) {
 			System.out.println( "Error on parsing command line arguments.");
@@ -112,11 +118,15 @@ public class DataGenerator {
 		List<DataPoint> dataPoints = getDataPoints(gaussianDataPoints, densityDataPoints);
 		
 		//Export data points to file
-		saveDataPointsToFile(dataPoints, filename);
+		saveDataPointsToFile(dataPoints, exportDir + "/data_" + timeStart + ".csv");
 		
 		//Plotting
 		try {
-			plot(dataPoints, true);   //TODO in final version remove showing of plots
+
+			//TODO get rid of showing plots
+			plotGaussianClusters(dataPoints, false, exportDir + "/gauss_" + timeStart + ".jpeg");
+			plotDensityClusters(dataPoints, false, exportDir + "/density_" + timeStart + ".jpeg");
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -192,34 +202,49 @@ public class DataGenerator {
 		System.out.println("Generate density-based clusters ...");
 		
 		double epsilon = 1.0;		
-		
-		double spacing = epsilon * numPointsPerCluster * 0.05;
+		double spacing = epsilon * numPointsPerCluster * 0.03;
 
-		if (overlapping)
-			spacing = epsilon * numPointsPerCluster * 0.02;
+		if (overlapping) 
+			spacing = epsilon * numPointsPerCluster * 0.015;
 		
 		int numPoints = numClusters * numPointsPerCluster;
+		int numCorePoints = numPoints / 10;
+		int numPointsPerCorePoint = (numPoints - numCorePoints) / numCorePoints;
+		int numCorePointsPerCluster = numCorePoints / numClusters;
 		
 		List<double[]> points = new ArrayList<double[]>();
 		
-		for (int i = 0; i < numPoints; i++) {
+		for (int i = 0; i < numCorePoints; i++) {
 			
-			double[] point = new double[numDimensions]; 
+			//Generate core point
+			double[] corePoint = new double[numDimensions]; 
 			
 			if (i == 0) {
-				Arrays.fill(point, 0);
+				Arrays.fill(corePoint, 0);
 			} else {
 
 				int direction = random.nextBoolean() ? 1 : -1;
 				
 				for (int k = 0; k < numDimensions; k++)
-					if ((i % numPointsPerCluster) != 0) 
-						point[k] = points.get(points.size() - 1)[k] + (epsilon * direction * random.nextDouble());
+					if ((i % numCorePointsPerCluster) != 0) 
+						corePoint[k] = points.get(points.size() - 1)[k] + (epsilon * direction * random.nextDouble());
 					else
-						point[k] = points.get(points.size() - 1)[k] + (epsilon * direction * random.nextDouble()) + spacing;
+						corePoint[k] = points.get(points.size() - 1)[k] + (epsilon * direction * random.nextDouble()) + spacing;
 			}
 			
-			points.add(point);
+			points.add(corePoint);
+			
+			//Add points arround core point
+			for (int j = 0; j < numPointsPerCorePoint; j++) {
+				
+				double[] point = new double[numDimensions];
+				
+				for (int k = 0; k < numDimensions; k++) 					
+					point[k] = corePoint[k] + (epsilon * random.nextDouble() * (random.nextBoolean() ? 1 : -1));
+					
+				points.add(point);
+			}
+			
 		}
 		
 		return points;
@@ -285,6 +310,7 @@ public class DataGenerator {
 	 * @param mergedDataPoints The full set of generated data points with point and cluster ids.
 	 * @param showPlot Wether the generated plot image should be shown or not.
 	 */
+	@Deprecated
 	private static void plot(List<DataPoint> mergedDataPoints, boolean showPlot) throws Exception {
 		
 		System.out.println("Plotting gaussian clusters ...");
@@ -332,5 +358,65 @@ public class DataGenerator {
 		}
 		
 		ChartUtilities.saveChartAsJPEG(new File(filename), chartGauss, 660, 420);
+	}
+	
+	/**
+	 * Generates and displays scatter plots for the gaussian clusters.
+	 * @param mergedDataPoints The full set of generated data points with point and cluster ids.
+	 * @param showPlot Wether the generated plot image should be shown or not.
+	 */
+	private static void plotGaussianClusters(List<DataPoint> mergedDataPoints, boolean showPlot, String filename) throws Exception {
+		
+		System.out.println("Plotting gaussian clusters ...");
+		
+		XYSeriesCollection datasetGauss = new XYSeriesCollection();
+		for (int i = 0; i < numClusters; i++) {
+			XYSeries series = new XYSeries("Cluster #" + i);
+				for (DataPoint dataPoint : mergedDataPoints)
+					if (dataPoint.getClusterId() == i)
+						series.add(dataPoint.getGaussFeatures()[0], dataPoint.getGaussFeatures()[1]);
+				datasetGauss.addSeries(series);
+		}
+		
+		JFreeChart chartGauss = ChartFactory.createScatterPlot("Gauss clusters", "x1", "x2", datasetGauss, 
+				PlotOrientation.VERTICAL, false, false, false);
+		
+		if (showPlot) {
+			ChartFrame frame = new ChartFrame(filename, chartGauss);
+			frame.pack();
+			frame.setVisible(true);
+		}
+		
+		ChartUtilities.saveChartAsJPEG(new File(filename), chartGauss, 660, 420);
+	}
+	
+	/**
+	 * Generates and displays scatter plots for the density clusters.
+	 * @param mergedDataPoints The full set of generated data points with point and cluster ids.
+	 * @param showPlot Wether the generated plot image should be shown or not.
+	 */
+	private static void plotDensityClusters(List<DataPoint> mergedDataPoints, boolean showPlot, String filename) throws Exception {
+		
+		System.out.println("Plotting density clusters ...");
+		
+		XYSeriesCollection datasetDensity = new XYSeriesCollection();
+		for (int i = 0; i < numClusters; i++) {
+			XYSeries series = new XYSeries("Cluster #" + i);
+			for (DataPoint dataPoint : mergedDataPoints)
+				if (dataPoint.getClusterId() == i)
+					series.add(dataPoint.getDensityFeatures()[0], dataPoint.getDensityFeatures()[1]);
+				datasetDensity.addSeries(series);
+		}
+		
+		JFreeChart chartDensity = ChartFactory.createScatterPlot("Density clusters", "x1", "x2", datasetDensity, 
+				PlotOrientation.VERTICAL, false, false, false);
+		
+		if (showPlot) {
+			ChartFrame frame = new ChartFrame(filename, chartDensity);
+			frame.pack();
+			frame.setVisible(true);
+		}
+		
+		ChartUtilities.saveChartAsJPEG(new File(filename), chartDensity, 660, 420);
 	}
 }
