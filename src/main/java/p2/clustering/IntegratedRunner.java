@@ -1,5 +1,8 @@
 package p2.clustering;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import de.lmu.ifi.dbs.elki.algorithm.clustering.DBSCAN;
 import de.lmu.ifi.dbs.elki.algorithm.clustering.kmeans.KMeansMacQueen;
 import de.lmu.ifi.dbs.elki.data.Cluster;
@@ -21,6 +24,7 @@ import de.lmu.ifi.dbs.elki.distance.distancefunction.minkowski.EuclideanDistance
 import de.lmu.ifi.dbs.elki.index.tree.spatial.rstarvariants.rstar.RStarTreeFactory;
 import de.lmu.ifi.dbs.elki.utilities.ClassGenericsUtil;
 import de.lmu.ifi.dbs.elki.utilities.optionhandling.parameterization.ListParameterization;
+import p2.elki.ClusterContingencyTable;
 
 public class IntegratedRunner {
 
@@ -35,35 +39,35 @@ public class IntegratedRunner {
 
 	public static void main(String[] args) {
 		
-		IntegratedRunner runner = new IntegratedRunner("/home/alepfu/Desktop/P2_export/data_1496004163759.csv");
+		IntegratedRunner runner = new IntegratedRunner("/home/alepfu/Desktop/P2_export/data_1496098805253.csv");
 		
-		ExtGaussData extDataGauss;
-		ExtDensityData extDensityData;
+		ExtData extData;
 		ExtKMeansClustering extKMeansClustering;
-		ExtDBSCANClustering extDBSCANClustering = null;
+		ExtDBSCANClustering extDBSCANClustering;
 		
 		//KMeans
-		extDataGauss = new ExtGaussData(runner.dataGauss, null);  //1st run has no dummy information yet
-		extKMeansClustering = runner.runKMeans(extDataGauss);  
-		System.out.println(runner.evaluateClustering(extKMeansClustering.getClustering()));
+		extData = new ExtData(runner.dataGauss, null);  //1st run has no dummy information yet
+		extKMeansClustering = runner.runKMeans(extData);  
+		runner.evaluateClusteringToGroundTruth(extKMeansClustering.getClustering());
 		
 		//DBSCAN
-		extDensityData = new ExtDensityData(runner.dataDensity, extKMeansClustering.getDummy());
-		extDBSCANClustering = runner.runDBSCAN(extDensityData);
-		System.out.println(runner.evaluateClustering(extDBSCANClustering.getClustering()));
-		
+		extData = new ExtData(runner.dataDensity, extKMeansClustering.getDummy());
+		extDBSCANClustering = runner.runDBSCANSuccessively(extData);
+		runner.evaluateClusteringToGroundTruth(extDBSCANClustering.getClustering());
+				
 		//KMeans
-		/*		extDataGauss = new ExtGaussData(runner.dataGauss, extDBSCANClustering.getDummy());
-		extKMeansClustering = runner.runKMeans(extDataGauss);
-		System.out.println(runner.evaluateClustering(extKMeansClustering.getClustering()));
+		extData = new ExtData(runner.dataGauss, extDBSCANClustering.getDummy());
+		extKMeansClustering = runner.runKMeans(extData);
+		runner.evaluateClusteringToGroundTruth(extKMeansClustering.getClustering());
 		
 		//DBSCAN
+		/*
 		extDensityData = new ExtDensityData(runner.dataDensity, extKMeansClustering.getDummy());
 		extDBSCANClustering = runner.runDBSCAN(extDensityData);
 		System.out.println(runner.evaluateClustering(extDBSCANClustering.getClustering()));
 */		
 		
-		System.out.println("Finished.");
+		System.out.println("\nFinished.");
 	}
 	
 	/**
@@ -83,26 +87,13 @@ public class IntegratedRunner {
 		dataDensity = dataUtil.loadDensityData();
 		
 		gtClustering = getGroundTruthClustering(numClusters, numPointsPerCluster);
-		
-		//DEBUG: log ground truth clustering
-		StringBuilder log = new StringBuilder();
-		log.append("Ground Truth Clustering:\n");
-		int clusterId = 0;
-		for (Cluster<Model> c : gtClustering.getAllClusters()) {
-			if (c.size() > 0) {
-				log.append("#" + clusterId + " [" + c.size() + "]");
-				log.append("\n");
-				++clusterId;
-			}
-		}
-		System.out.println(log);
 	}
 	
 	/**
 	 * Runs KMeans clustering using data extended by DBSCAN cluster labels in dummy encoding.
 	 * @return A KMeans clustering result including the found cluster labels in dummy encoding.
 	 */
-	private ExtKMeansClustering runKMeans(ExtGaussData extDataGauss) {
+	private ExtKMeansClustering runKMeans(ExtData extDataGauss) {
 		
 		ArrayAdapterDatabaseConnection gaussDBConn = new ArrayAdapterDatabaseConnection(extDataGauss.getExtData());
 		ListParameterization gaussDBParams = new ListParameterization();
@@ -135,13 +126,60 @@ public class IntegratedRunner {
 	}
 	
 	/**
+	 * Just a single DBSCAN run on the extended data.
+	 * 
+	 * @param extDensityData
+	 * @return
+	 */
+	private ExtDBSCANClustering runDBSCANSingle(ExtData extData) {
+		
+		ArrayAdapterDatabaseConnection densityDBConn = new ArrayAdapterDatabaseConnection(extData.getExtData());
+		ListParameterization densityDBParams = new ListParameterization();
+		densityDBParams.addParameter(AbstractDatabase.Parameterizer.DATABASE_CONNECTION_ID, densityDBConn);
+		densityDBParams.addParameter(AbstractDatabase.Parameterizer.INDEX_ID, RStarTreeFactory.class);
+		Database densityDB = ClassGenericsUtil.parameterizeOrAbort(StaticArrayDatabase.class, densityDBParams);
+		densityDB.initialize();
+		
+		Relation<NumberVector> densityRel = densityDB.getRelation(TypeUtil.NUMBER_VECTOR_FIELD);
+	    DBIDRange densityIDs = (DBIDRange) densityRel.getDBIDs();
+		
+		int minPts = 10;							
+		double epsilon = 1.0;					
+		
+		ListParameterization dbscanParams = new ListParameterization();
+		dbscanParams.addParameter(DBSCAN.Parameterizer.EPSILON_ID, epsilon);
+		dbscanParams.addParameter(DBSCAN.Parameterizer.MINPTS_ID, minPts);
+		dbscanParams.addParameter(DBSCAN.DISTANCE_FUNCTION_ID, EuclideanDistanceFunction.class);
+
+		DBSCAN<DoubleVector> dbscan = ClassGenericsUtil.parameterizeOrAbort(DBSCAN.class, dbscanParams);
+		Clustering<Model> dbscanClustering = dbscan.run(densityDB);
+		
+		int numFoundClusters = dbscanClustering.getAllClusters().size();
+		
+		double[][] dbscanDummy = new double[numPoints][numFoundClusters];
+		
+		int clusterID = 0;
+		for (Cluster<Model> c : dbscanClustering.getAllClusters()) {
+			for (DBIDIter it = c.getIDs().iter(); it.valid(); it.advance()) 
+				dbscanDummy[densityIDs.getOffset(it)][clusterID] = 1.0;
+			++clusterID;
+		}
+		
+		ExtDBSCANClustering extClustering = new ExtDBSCANClustering(dbscanClustering, dbscanDummy, densityIDs);
+		
+		return extClustering;
+	}
+	
+	
+	/**
 	 * Runs DBSCAN clustering using data extended by KMeans cluster labels in dummy encoding.
 	 * Since we know k (the number of clusters) we do multiple runs of DBSCAN with increasing epsilon until k clusters are found.
+	 * 
 	 * @return A DBSCAN clustering result including the found cluster labels in dummy encoding.
 	 */
-	private ExtDBSCANClustering runDBSCAN(ExtDensityData extDensityData) {
+	private ExtDBSCANClustering runDBSCANSuccessively(ExtData extData) {
 		
-		ArrayAdapterDatabaseConnection densityDBConn = new ArrayAdapterDatabaseConnection(extDensityData.getExtData());
+		ArrayAdapterDatabaseConnection densityDBConn = new ArrayAdapterDatabaseConnection(extData.getExtData());
 		ListParameterization densityDBParams = new ListParameterization();
 		densityDBParams.addParameter(AbstractDatabase.Parameterizer.DATABASE_CONNECTION_ID, densityDBConn);
 		densityDBParams.addParameter(AbstractDatabase.Parameterizer.INDEX_ID, RStarTreeFactory.class);
@@ -153,38 +191,47 @@ public class IntegratedRunner {
 		
 	    //Successively increase epsilon until DBSCAN finds k clusters. 
 		double stepsize = 0.1;
-		int nFoundClusters = 0;
-		int minPts = 2 * numDimensions - 1;		//As suggested by Elki
+		int numFoundClusters = 0;
+		int minPts = 10;						//Suggested by Elki = 2 * numDimensions - 1
 		double epsilon = 1.0;					//TODO Is this a good idea? Start big/small?
 		Clustering<Model> dbscanClustering;
+		
 		do {
 			ListParameterization dbscanParams = new ListParameterization();
 			dbscanParams.addParameter(DBSCAN.Parameterizer.EPSILON_ID, epsilon);
 			dbscanParams.addParameter(DBSCAN.Parameterizer.MINPTS_ID, minPts);
 			dbscanParams.addParameter(DBSCAN.DISTANCE_FUNCTION_ID, EuclideanDistanceFunction.class);
-
+			
 			DBSCAN<DoubleVector> dbscan = ClassGenericsUtil.parameterizeOrAbort(DBSCAN.class, dbscanParams);
 			dbscanClustering = dbscan.run(densityDB);
 			epsilon += stepsize;
+			
+			//Don't account for 0-element clusters
+			numFoundClusters = 0;
+			for (Cluster<Model> c : dbscanClustering.getAllClusters())
+				if (c.size() > 0)	
+					++numFoundClusters;
 
-			nFoundClusters = 0;
+		} while (numFoundClusters != numClusters);
+		
+		
+		//Strip 0-element clusters
+		Clustering<Model> stripped = new Clustering<Model>("DBSCAN Clustering", "dbscan-clustering");
+		if (numFoundClusters != dbscanClustering.getAllClusters().size()) {
 			for (Cluster<Model> c : dbscanClustering.getAllClusters())
 				if (c.size() > 0)
-					++nFoundClusters;
-
-		} while (nFoundClusters > numClusters);
+					stripped.addToplevelCluster(c);
+			dbscanClustering = stripped;
+		}
 		
-		//System.out.println("Epsilon = " + epsilon);
 		
-		double[][] dbscanDummy = new double[numPoints][numClusters];
+		double[][] dbscanDummy = new double[numPoints][numFoundClusters];
 		
 		int clusterID = 0;
 		for (Cluster<Model> c : dbscanClustering.getAllClusters()) {
-			if (c.size() > 0) {
-				for (DBIDIter it = c.getIDs().iter(); it.valid(); it.advance()) 
-					dbscanDummy[densityIDs.getOffset(it)][clusterID] = 1.0;
-				++clusterID;
-			}
+			for (DBIDIter it = c.getIDs().iter(); it.valid(); it.advance()) 
+				dbscanDummy[densityIDs.getOffset(it)][clusterID] = 1.0;
+			++clusterID;
 		}
 		
 		ExtDBSCANClustering extClustering = new ExtDBSCANClustering(dbscanClustering, dbscanDummy, densityIDs);
@@ -203,29 +250,67 @@ public class IntegratedRunner {
 	 */
 	private Clustering<Model> getGroundTruthClustering(int numClusters, int numPointsPerCluster) {
 		
-		Clustering<Model> gdClustering = new Clustering<Model>("Ground truth", "gd");
+		Clustering<Model> gtClustering = new Clustering<Model>("Ground truth", "gd");
 		SimpleDBIDFactory idFactory = new SimpleDBIDFactory();
+		DBIDRange ids = idFactory.generateStaticDBIDRange(numClusters * numPointsPerCluster);
+
+		//DEBUG log ground truth clustering
+		StringBuilder log = new StringBuilder();
+		log.append("Ground Truth Clustering:\n");
 		
 		for (int i = 0; i < numClusters; i++) {
-			DBIDRange ids = idFactory.generateStaticDBIDRange(i * numPointsPerCluster, numPointsPerCluster);
-			Cluster<Model> gdCluster = new Cluster<Model>(Integer.toString(i), ids);
-			gdClustering.addToplevelCluster(gdCluster);
-		}		
+			
+			Cluster<Model> gtCluster = new Cluster<Model>(Integer.toString(i), ids.slice(i * numPointsPerCluster, (i + 1) * numPointsPerCluster));
+			gtClustering.addToplevelCluster(gtCluster);
+			
+			//DEBUG log ground truth clustering
+			log.append("#" + i + " [" + gtCluster.size() + "]");
+			for (DBIDIter it = gtCluster.getIDs().iter(); it.valid(); it.advance())
+				log.append(" " + ids.getOffset(it));
+			log.append("\n");
+		}
+		
+		//DEBUG log ground truth clustering
+		System.out.print(log);
 
-		return gdClustering;
+		return gtClustering;
 	}
 	
 	/**
-	 * Compares a clustering with the ground truth clutering.
+	 * Uses extracted stuff from Elki!
+	 * 
+	 * Compares a clustering with the ground truth clutering using mutual information.
+	 * 
+	 * High mutual information indicates a large reduction in uncertainty;
+	 * low mutual information indicates a small reduction;
+	 * and zero mutual information between two random variables means the variables are independent. 
+	 * 
 	 * @param c Clustering to compare to ground truth
 	 * @return The mutual information measure
 	 */
-	private double evaluateClustering(Clustering<?> c) {
+	private void evaluateClusteringToGroundTruthElki(Clustering<?> clustering) {
 		
 		ClusterContingencyTable table = new ClusterContingencyTable(false, false);
-		table.process(gtClustering,  c);
+		table.process(gtClustering, clustering);
 		
-		return new Entropy(table).normalizedVariationOfInformation();
+		//DEBUG log
+		System.out.println(table.toString());
+		
+		double mi = table.getEntropy().entropyMutualInformation();
+		
+		System.out.println("Mutual information: " +  mi);
+	}
+	
+	/**
+	 * My own implementation of MI between two clusterings.
+	 * 
+	 */
+	private void evaluateClusteringToGroundTruth(Clustering<?> clustering) {
+		
+		//TODO implement :D
+		
+		//See paper "Comparing Clusterings - An Overview" for tips on implementation!
+		
 	}
 
 }

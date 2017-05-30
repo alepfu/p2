@@ -1,4 +1,4 @@
-package p2.clustering;
+package p2.elki;
 
 
 public class Entropy {

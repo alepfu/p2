@@ -1,5 +1,9 @@
 package p2.clustering;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import de.lmu.ifi.dbs.elki.data.Cluster;
 import de.lmu.ifi.dbs.elki.data.Clustering;
 import de.lmu.ifi.dbs.elki.data.model.Model;
@@ -17,22 +21,27 @@ public class ExtDBSCANClustering {
 		this.dummy = dummy;
 		this.ids = ids;
 		
-		//DEBUG: log clustering
+		//DEBUG log clustering
 		StringBuilder log = new StringBuilder();
-		log.append("DBSCAN Clustering:\n");
+		log.append("\nDBSCAN Clustering:\n");
 		int clusterId = 0;
 		for (Cluster<Model> c : clustering.getAllClusters()) {
-			if (c.size() > 0) {
-				log.append("#" + clusterId + " [" + c.size() + "]");
-				for (DBIDIter it = c.getIDs().iter(); it.valid(); it.advance())
-					log.append(" " + ids.getOffset(it));
-				log.append("\n");
-				++clusterId;
-			}
+			log.append("#" + clusterId + " [" + c.size() + "]");
+			
+			List<Integer> idList = new ArrayList<Integer>();
+			for (DBIDIter it = c.getIDs().iter(); it.valid(); it.advance())
+				idList.add(ids.getOffset(it));
+			
+			Collections.sort(idList);
+			for (Integer id : idList)
+				log.append(" " + id);
+			
+			log.append("\n");
+			++clusterId;
 		}
 		System.out.println(log);
 		
-		//DEBUG: log dummy encoding
+		//DEBUG log dummy encoding
 		/*log = new StringBuilder();
 		log.append("\nDBSCAN Dummy:\n");
 		for (int row = 0; row < dummy.length; row++) { 

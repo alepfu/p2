@@ -42,7 +42,7 @@ public class DataGenerator {
 	/**
 	 * Number of clusters to be generated.
 	 */
-	static int numClusters = 3;
+	static int numClusters = 2;
 	
 	/**
 	 * Number of generated points per cluster, meaningful values range from 100 to 1,000,000. 
@@ -204,8 +204,16 @@ public class DataGenerator {
 		double epsilon = 1.0;		
 		double spacing = epsilon * numPointsPerCluster * 0.03;
 
-		if (overlapping) 
+		
+		
+		if (overlapping) {
 			spacing = epsilon * numPointsPerCluster * 0.015;
+		
+			//Empirical stuff
+			if (numClusters == 2)
+				spacing = epsilon * numPointsPerCluster * 0.005;
+			
+		}
 		
 		int numPoints = numClusters * numPointsPerCluster;
 		int numCorePoints = numPoints / 10;

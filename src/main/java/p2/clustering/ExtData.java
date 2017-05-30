@@ -1,24 +1,24 @@
 package p2.clustering;
 
-import java.text.NumberFormat;
-
-public class ExtDensityData {
+public class ExtData {
 	
 	private double[][] data;
 	private double[][] dummy;
 	
-	//TODO In theory we don't need 2 separate ExtData classes, reduce to one
-	
-	public ExtDensityData(double[][] data, double[][] dummy) {
+	public ExtData(double[][] data, double[][] dummy) {
 		this.data = data;
 		this.dummy = dummy;
 	}
 
 	/**
 	 * Normalizes the dummy encoding to the variance of the data, then appends the dummy encoding to the data.
+	 * Handles the 1st run, which has no dummy encoding yet.
 	 * @return Concat between data and dummy encoding.
 	 */
 	public double[][] getExtData() {
+		
+		if (dummy == null)  //For handling the 1st run
+			return data;
 		
 		if (data.length != dummy.length)
 			throw new IllegalStateException("data.length != dummy.length");
@@ -51,11 +51,12 @@ public class ExtDensityData {
 			for (int col = numColsData; col < numColsConcat; col++)
 				extData[row][col] = dummy[row][col - numColsData];		
 		
+		
 		//DEBUG: print data with normalized dummy encoding attached
 		/*NumberFormat nf = NumberFormat.getInstance();
 		nf.setMinimumFractionDigits(2);
 		nf.setMaximumFractionDigits(2);
-		StringBuilder log = new StringBuilder("Extended Density Data:\n");
+		StringBuilder log = new StringBuilder("Extended Gauss Data:\n");
 		for (int row = 0; row < numRows; row++) {
 			for (int col = 0; col < numColsConcat; col++)
 				log.append(nf.format(extData[row][col]) + " ");
@@ -65,4 +66,7 @@ public class ExtDensityData {
 		
 		return extData;
 	}
+	
+	
+
 }

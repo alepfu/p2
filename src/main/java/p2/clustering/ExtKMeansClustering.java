@@ -1,5 +1,9 @@
 package p2.clustering;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import de.lmu.ifi.dbs.elki.data.Cluster;
 import de.lmu.ifi.dbs.elki.data.Clustering;
 import de.lmu.ifi.dbs.elki.data.model.KMeansModel;
@@ -17,20 +21,28 @@ public class ExtKMeansClustering {
 		this.dummy = dummy;
 		this.ids = ids;
 		
-		//DEBUG: log the clustering
+		//DEBUG log the clustering
 		StringBuilder log = new StringBuilder();
-		log.append("KMeans Clustering:\n");
+		log.append("\nKMeans Clustering:\n");
 		int clusterId = 0;
 		for (Cluster<KMeansModel> c : clustering.getAllClusters()) {
 			log.append("#" + clusterId + " [" + c.size() + "]");
+			
+			List<Integer> idList = new ArrayList<Integer>();
 			for (DBIDIter it = c.getIDs().iter(); it.valid(); it.advance())
-				log.append(" " + ids.getOffset(it));
+				idList.add(ids.getOffset(it));
+			
+			Collections.sort(idList);
+			for (Integer id : idList)
+				log.append(" " + id);
+			
 			log.append("\n");
 			++clusterId;
 		}
+		
 		System.out.println(log);
 
-		//DEBUG: log dummy encoding
+		//DEBUG log dummy encoding
 		/*log = new StringBuilder();
 		log.append("\nKMeans Dummy:\n");
 		for (int row = 0; row < dummy.length; row++) { 
