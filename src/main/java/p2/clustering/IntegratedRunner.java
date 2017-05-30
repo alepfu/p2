@@ -1,10 +1,13 @@
 package p2.clustering;
 
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import de.lmu.ifi.dbs.elki.algorithm.clustering.DBSCAN;
 import de.lmu.ifi.dbs.elki.algorithm.clustering.kmeans.KMeansMacQueen;
+import de.lmu.ifi.dbs.elki.algorithm.clustering.trivial.ByLabelClustering;
 import de.lmu.ifi.dbs.elki.data.Cluster;
 import de.lmu.ifi.dbs.elki.data.Clustering;
 import de.lmu.ifi.dbs.elki.data.DoubleVector;
@@ -20,6 +23,10 @@ import de.lmu.ifi.dbs.elki.database.ids.DBIDRange;
 import de.lmu.ifi.dbs.elki.database.ids.integer.SimpleDBIDFactory;
 import de.lmu.ifi.dbs.elki.database.relation.Relation;
 import de.lmu.ifi.dbs.elki.datasource.ArrayAdapterDatabaseConnection;
+import de.lmu.ifi.dbs.elki.datasource.FileBasedDatabaseConnection;
+import de.lmu.ifi.dbs.elki.datasource.filter.FixedDBIDsFilter;
+import de.lmu.ifi.dbs.elki.datasource.filter.ObjectFilter;
+import de.lmu.ifi.dbs.elki.datasource.parser.NumberVectorLabelParser;
 import de.lmu.ifi.dbs.elki.distance.distancefunction.minkowski.EuclideanDistanceFunction;
 import de.lmu.ifi.dbs.elki.index.tree.spatial.rstarvariants.rstar.RStarTreeFactory;
 import de.lmu.ifi.dbs.elki.utilities.ClassGenericsUtil;
@@ -34,12 +41,18 @@ public class IntegratedRunner {
 	private int numPoints;
 	private double[][] dataGauss;
 	private double[][] dataDensity;
+	private double[][] data;
+	private Clustering<Model> trueClustering;	
 	
-	private Clustering<Model> gtClustering;	
+	private static String filenameData = "/home/alepfu/Desktop/P2_export/data_1496180670840.csv";
+	
+	@Deprecated
+	private static String filenameClustering = "/home/alepfu/Desktop/P2_export/clustering_1496180670840.csv";
+	
 
 	public static void main(String[] args) {
 		
-		IntegratedRunner runner = new IntegratedRunner("/home/alepfu/Desktop/P2_export/data_1496098805253.csv");
+		IntegratedRunner runner = new IntegratedRunner(filenameData);
 		
 		ExtData extData;
 		ExtKMeansClustering extKMeansClustering;
@@ -48,8 +61,8 @@ public class IntegratedRunner {
 		//KMeans
 		extData = new ExtData(runner.dataGauss, null);  //1st run has no dummy information yet
 		extKMeansClustering = runner.runKMeans(extData);  
-		runner.evaluateClusteringToGroundTruth(extKMeansClustering.getClustering());
-		
+		runner.evaluateClustering(extKMeansClustering.getClustering());
+/*		
 		//DBSCAN
 		extData = new ExtData(runner.dataDensity, extKMeansClustering.getDummy());
 		extDBSCANClustering = runner.runDBSCANSuccessively(extData);
@@ -83,10 +96,20 @@ public class IntegratedRunner {
 		numClusters = dataUtil.getNumClusters();
 		numPointsPerCluster = dataUtil.getNumPointsPerCluster();
 		numPoints = numClusters * numPointsPerCluster;
+		data = dataUtil.loadData();
 		dataGauss = dataUtil.loadGaussianData();
 		dataDensity = dataUtil.loadDensityData();
 		
-		gtClustering = getGroundTruthClustering(numClusters, numPointsPerCluster);
+		//gtClustering = getGroundTruthClustering(numClusters, numPointsPerCluster);
+		
+		try {
+			
+			trueClustering = getTrueClustering();
+			
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		
 	}
 	
 	/**
@@ -248,6 +271,7 @@ public class IntegratedRunner {
 	 * @param numPointsPerCluster The number of points per cluster.
 	 * @return The ground truth clustering.
 	 */
+	@Deprecated
 	private Clustering<Model> getGroundTruthClustering(int numClusters, int numPointsPerCluster) {
 		
 		Clustering<Model> gtClustering = new Clustering<Model>("Ground truth", "gd");
@@ -277,6 +301,54 @@ public class IntegratedRunner {
 	}
 	
 	/**
+	 * Loads the true clustering from the data file
+	 * Use for evaluation of clusterings.
+	 * @return The true clustering.
+	 */
+	private Clustering<Model> getTrueClustering() throws FileNotFoundException {
+
+		List<ObjectFilter> filterlist = new ArrayList<>();
+		filterlist.add(new FixedDBIDsFilter(1));
+		
+		NumberVectorLabelParser<DoubleVector> parser = new NumberVectorLabelParser<>(DoubleVector.FACTORY);
+		FileBasedDatabaseConnection dbc = new FileBasedDatabaseConnection(filterlist, parser, filenameData);
+		
+		ListParameterization params = new ListParameterization();
+		params.addParameter(AbstractDatabase.Parameterizer.DATABASE_CONNECTION_ID, dbc);
+		
+		Database db = ClassGenericsUtil.parameterizeOrAbort(StaticArrayDatabase.class, params);
+		db.initialize();
+		
+		Relation<?> rel = db.getRelation(TypeUtil.ANY);
+		DBIDRange ids = (DBIDRange) rel.getDBIDs();
+
+		ByLabelClustering algo = new ByLabelClustering();
+		Clustering<Model> clustering = algo.run(db);
+		
+		//DEBUG log clustering
+		StringBuilder log = new StringBuilder();
+		log.append("\nTrue Clustering:\n");
+		int clusterId = 0;
+		for (Cluster<Model> c : clustering.getAllClusters()) {
+			log.append("#" + clusterId + " [" + c.size() + "]");
+			
+			List<Integer> idList = new ArrayList<Integer>();
+			for (DBIDIter it = c.getIDs().iter(); it.valid(); it.advance())
+				idList.add(ids.getOffset(it));
+			
+			Collections.sort(idList);
+			for (Integer id : idList)
+				log.append(" " + id);
+			
+			log.append("\n");
+			++clusterId;
+		}
+		System.out.println(log);
+		
+		return clustering;
+	}
+
+	/**
 	 * Uses extracted stuff from Elki!
 	 * 
 	 * Compares a clustering with the ground truth clutering using mutual information.
@@ -285,32 +357,25 @@ public class IntegratedRunner {
 	 * low mutual information indicates a small reduction;
 	 * and zero mutual information between two random variables means the variables are independent. 
 	 * 
-	 * @param c Clustering to compare to ground truth
+	 * @param c Clustering to compare to true clustering
 	 * @return The mutual information measure
 	 */
-	private void evaluateClusteringToGroundTruthElki(Clustering<?> clustering) {
+	private void evaluateClustering(Clustering<?> clustering) {
 		
-		ClusterContingencyTable table = new ClusterContingencyTable(false, false);
-		table.process(gtClustering, clustering);
+		ClusterContingencyTable ct = new ClusterContingencyTable(true, false);
+		ct.process(trueClustering, clustering);
 		
 		//DEBUG log
-		System.out.println(table.toString());
+		System.out.println(ct.toString());
 		
-		double mi = table.getEntropy().entropyMutualInformation();
+		double mi = ct.getEntropy().entropyMutualInformation();
 		
-		System.out.println("Mutual information: " +  mi);
+		System.out.println("Mutual information: " + mi);
+	
+		
 	}
 	
-	/**
-	 * My own implementation of MI between two clusterings.
-	 * 
-	 */
-	private void evaluateClusteringToGroundTruth(Clustering<?> clustering) {
-		
-		//TODO implement :D
-		
-		//See paper "Comparing Clusterings - An Overview" for tips on implementation!
-		
-	}
+	
+	
 
 }

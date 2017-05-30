@@ -30,7 +30,7 @@ public class KMeansRunner {
 		DataLoaderUtil util = new DataLoaderUtil(FILE);	
 		int numClusters = util.getNumClusters();
 		int numPointsPerCluster = util.getNumPointsPerCluster();
-		double[][] data = util.loadMergedData();
+		double[][] data = util.loadData();
 		
 		//Initialize DB and clustering algorithm
 		ArrayAdapterDatabaseConnection dbc = new ArrayAdapterDatabaseConnection(data);

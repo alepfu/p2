@@ -6,15 +6,13 @@ public class DataPoint {
 	
 	double[] gaussFeatures;
 	double[] densityFeatures;
-	int id;
-	int clusterId;
+	String clusterLabel;
 	
-	public DataPoint(double[] gaussFeatures, double[] densityFeatures, int id, int clusterId) {
+	public DataPoint(double[] gaussFeatures, double[] densityFeatures, String cluserLabel) {
 		
 		this.gaussFeatures = gaussFeatures;
 		this.densityFeatures = densityFeatures;
-		this.id = id;
-		this.clusterId = clusterId;
+		this.clusterLabel = cluserLabel;
 	}
 	
 	public double[] getGaussFeatures() {
@@ -33,29 +31,22 @@ public class DataPoint {
 		this.densityFeatures = densityFeatures;
 	}
 	
-	public int getId() {
-		return id;
+	public String getClusterLabel() {
+		return clusterLabel;
 	}
-	
-	public void setId(int id) {
-		this.id = id;
+
+	public void setClusterLabel(String clusterLabel) {
+		this.clusterLabel = clusterLabel;
 	}
-	
-	public int getClusterId() {
-		return clusterId;
-	}
-	
-	public void setClusterId(int clusterId) {
-		this.clusterId = clusterId;
-	}
-	
+
 	public String toString() {
 		
 		StringBuilder sb = new StringBuilder();
-		sb.append(id).append(",");
-		sb.append(Arrays.toString(gaussFeatures).replace(" ", "").replace("[", "").replace("]", "")).append(",");
-		sb.append(Arrays.toString(densityFeatures).replace(" ", "").replace("[", "").replace("]", "")).append(",");
-		sb.append(clusterId);
+		sb.append(Arrays.toString(gaussFeatures).replace("[", "").replace("]", "").replace(",", ""));
+		sb.append(" ");
+		sb.append(Arrays.toString(densityFeatures).replace("[", "").replace("]", "").replace(",", ""));
+		sb.append(" ");
+		sb.append(clusterLabel);
 		
 		return sb.toString();
 	}

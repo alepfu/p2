@@ -32,7 +32,7 @@ public class DBSCANRunner {
 		int numDimensions = util.getNumDimensions();
 		int numClusters = util.getNumClusters();
 		int numPointsPerCluster = util.getNumPointsPerCluster();
-		double[][] data = util.loadMergedData();
+		double[][] data = util.loadData();
 		
 		//Initialize DB
 		ArrayAdapterDatabaseConnection dbc = new ArrayAdapterDatabaseConnection(data);

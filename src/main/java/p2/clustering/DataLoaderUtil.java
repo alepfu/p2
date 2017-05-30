@@ -13,8 +13,9 @@ public class DataLoaderUtil {
 	private int numPointsPerCluster;
 	private int numClusters;
 	private int numPoints;
+	private boolean overlapping;
 	
-	private double[][] mergedData;
+	private double[][] data;
 	
 	public DataLoaderUtil(String file) {
 		
@@ -41,31 +42,31 @@ public class DataLoaderUtil {
 			numPointsPerCluster = Integer.parseInt(header.get("numPointsPerCluster"));
 			numClusters = Integer.parseInt(header.get("numClusters"));
 			numPoints = numClusters * numPointsPerCluster;
+			overlapping = Boolean.parseBoolean(header.get("overlapping"));
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	public double[][] loadMergedData() {
+	public double[][] loadData() {
 		
-		if (mergedData != null)
-			return mergedData;
+		if (data != null)
+			return data;
 		
-		mergedData = new double[numPoints][numDimensions * 2];
+		data = new double[numPoints][numDimensions * 2];
 		
 		try {
 			String line = "";
+			int id = 0;
 			BufferedReader br = new BufferedReader(new FileReader(file));
 			while ((line = br.readLine()) != null) {
 			
 				if (!line.startsWith("#")) {
-				
-					String[] split = line.split(",");
-					int id = Integer.parseInt(split[0]);
-					
+					String[] split = line.split(" ");
 					for (int j = 0; j < (numDimensions * 2); j++)
-						mergedData[id][j] = Double.parseDouble(split[j + 1]);
+						data[id][j] = Double.parseDouble(split[j]);
+					++id;
 				}
 			}
 
@@ -75,33 +76,33 @@ public class DataLoaderUtil {
 			e.printStackTrace();
 		}
 		
-		return mergedData;
+		return data;
 	}
 	
 	public double[][] loadGaussianData() {
 		
-		if (mergedData == null)
-			mergedData = this.loadMergedData();
+		if (data == null)
+			data = this.loadData();
 		
 		//Copy gaussian data points to double[][] array
-		double[][] gaussianData = new double[mergedData.length][numDimensions];
-		for (int i = 0; i < mergedData.length; i++)
+		double[][] gaussianData = new double[data.length][numDimensions];
+		for (int i = 0; i < data.length; i++)
 			for (int j = 0; j < numDimensions; j++)
-				gaussianData[i][j] = mergedData[i][j];
+				gaussianData[i][j] = data[i][j];
 		
 		return gaussianData; 
 	}
 	
 	public double[][] loadDensityData() {
 		
-		if (mergedData == null)
-			mergedData = this.loadMergedData();
+		if (data == null)
+			data = this.loadData();
 		
 		//Copy density data points to double[][] array
-		double[][] densityData = new double[mergedData.length][numDimensions];
-		for (int i = 0; i < mergedData.length; i++)
+		double[][] densityData = new double[data.length][numDimensions];
+		for (int i = 0; i < data.length; i++)
 			for (int j = 0; j < numDimensions; j++)
-				densityData[i][j] = mergedData[i][j +  numDimensions];
+				densityData[i][j] = data[i][j +  numDimensions];
 		
 		return densityData; 
 	}

@@ -42,7 +42,7 @@ public class DataGenerator {
 	/**
 	 * Number of clusters to be generated.
 	 */
-	static int numClusters = 2;
+	static int numClusters = 5;
 	
 	/**
 	 * Number of generated points per cluster, meaningful values range from 100 to 1,000,000. 
@@ -120,10 +120,13 @@ public class DataGenerator {
 		//Export data points to file
 		saveDataPointsToFile(dataPoints, exportDir + "/data_" + timeStart + ".csv");
 		
+		//Export true clustering to file
+		saveClusteringToFile(exportDir + "/clustering_" + timeStart + ".csv");
+		
 		//Plotting
 		try {
 
-			//TODO get rid of showing plots
+			//TODO get rid of showing plots functionality
 			plotGaussianClusters(dataPoints, false, exportDir + "/gauss_" + timeStart + ".jpeg");
 			plotDensityClusters(dataPoints, false, exportDir + "/density_" + timeStart + ".jpeg");
 			
@@ -164,9 +167,9 @@ public class DataGenerator {
 		if ((10000 > numPoints) && (numPoints >= 1000))
 			factor = 3.5;
 		
-		//For overlapping clusters we just cut factor in half
+		//For overlapping clusters we just cut factor
 		if (overlapping)
-			factor /= 2;
+			factor /= 3;
 
 		//Generate data points
 		for (int i = 0; i < numClusters; i++) {
@@ -276,7 +279,7 @@ public class DataGenerator {
 			if ((i % numPointsPerCluster) == 0)
 				clusterId++;
 			
-			DataPoint p = new DataPoint(gaussianDataPoints.get(i), densityDataPoints.get(i), i, clusterId);
+			DataPoint p = new DataPoint(gaussianDataPoints.get(i), densityDataPoints.get(i), "c" + clusterId);
 			dataPoints.add(p);
 		}
 		
@@ -289,18 +292,18 @@ public class DataGenerator {
 	 * @param dataPoints A list of data points.
 	 * @param file A filename.
 	 */
-	private static void saveDataPointsToFile(List<DataPoint> dataPoints, String file) {
+	private static void saveDataPointsToFile(List<DataPoint> dataPoints, String filename) {
 		
 		System.out.println("Export data points to file ...");
 		
 		try {
-			BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+			BufferedWriter writer = new BufferedWriter(new FileWriter(filename));
 			
 			//Add header holding the set parameter values
 			writer.write("#numClusters=" + numClusters + "\n" +
 						 "#numDimensions=" + numDimensions + "\n" +
 						 "#numPointsPerCluster=" + numPointsPerCluster + "\n" +
-						 "#spacingType=" + overlapping + "\n");
+						 "#overlapping=" + overlapping + "\n");
 			
 			for (DataPoint p : dataPoints) {
 				writer.write(p.toString());
@@ -314,58 +317,30 @@ public class DataGenerator {
 	}
 	
 	/**
-	 * Generates and displays scatter plots for the gaussian and density clusters.
-	 * @param mergedDataPoints The full set of generated data points with point and cluster ids.
-	 * @param showPlot Wether the generated plot image should be shown or not.
+	 * Exports the clustering to a file, so that later it can be load by Elki as the true clustering.
+	 * File format, e.g. "1 1 1 2 2 2 -1 label" where non-negative numbers are cluster assignments, negative numbers are noise clusters.
+	 * @param file
 	 */
 	@Deprecated
-	private static void plot(List<DataPoint> mergedDataPoints, boolean showPlot) throws Exception {
+	private static void saveClusteringToFile(String filename) {
 		
-		System.out.println("Plotting gaussian clusters ...");
-		String filename = "plots/gauss.jpeg";
+		System.out.println("Export clustering to file ...");
 		
-		XYSeriesCollection datasetGauss = new XYSeriesCollection();
-		for (int i = 0; i < numClusters; i++) {
-			XYSeries series = new XYSeries("Cluster #" + i);
-				for (DataPoint dataPoint : mergedDataPoints)
-					if (dataPoint.getClusterId() == i)
-						series.add(dataPoint.getGaussFeatures()[0], dataPoint.getGaussFeatures()[1]);
-				datasetGauss.addSeries(series);
+		StringBuilder builder = new StringBuilder();
+		for (int i = 0; i < numClusters; i++)
+			for (int j = 0; j < numPointsPerCluster; j++)
+				builder.append((i + 1) + " ");
+		builder.append("True_clustering\n");
+		
+		try {
+			FileWriter writer = new FileWriter(new File(filename));
+			writer.write(builder.toString());
+			writer.flush();
+			writer.close();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		
-		JFreeChart chartGauss = ChartFactory.createScatterPlot("Gauss clusters", "x1", "x2", datasetGauss, 
-				PlotOrientation.VERTICAL, false, false, false);
-		
-		if (showPlot) {
-			ChartFrame frame = new ChartFrame(filename, chartGauss);
-			frame.pack();
-			frame.setVisible(true);
-		}
-		
-		ChartUtilities.saveChartAsJPEG(new File(filename), chartGauss, 660, 420);
-		
-		System.out.println("Plotting density clusters ...");
-		filename = "plots/density.jpeg";
-		
-		XYSeriesCollection datasetDensity = new XYSeriesCollection();
-		for (int i = 0; i < numClusters; i++) {
-			XYSeries series = new XYSeries("Cluster #" + i);
-			for (DataPoint dataPoint : mergedDataPoints)
-				if (dataPoint.getClusterId() == i)
-					series.add(dataPoint.getDensityFeatures()[0], dataPoint.getDensityFeatures()[1]);
-				datasetDensity.addSeries(series);
-		}
-		
-		JFreeChart chartDensity = ChartFactory.createScatterPlot("Density clusters", "x1", "x2", datasetDensity, 
-				PlotOrientation.VERTICAL, false, false, false);
-		
-		if (showPlot) {
-			ChartFrame frame = new ChartFrame(filename, chartDensity);
-			frame.pack();
-			frame.setVisible(true);
-		}
-		
-		ChartUtilities.saveChartAsJPEG(new File(filename), chartGauss, 660, 420);
 	}
 	
 	/**
@@ -381,7 +356,7 @@ public class DataGenerator {
 		for (int i = 0; i < numClusters; i++) {
 			XYSeries series = new XYSeries("Cluster #" + i);
 				for (DataPoint dataPoint : mergedDataPoints)
-					if (dataPoint.getClusterId() == i)
+					if (dataPoint.getClusterLabel().equals("c" + i))
 						series.add(dataPoint.getGaussFeatures()[0], dataPoint.getGaussFeatures()[1]);
 				datasetGauss.addSeries(series);
 		}
@@ -411,7 +386,7 @@ public class DataGenerator {
 		for (int i = 0; i < numClusters; i++) {
 			XYSeries series = new XYSeries("Cluster #" + i);
 			for (DataPoint dataPoint : mergedDataPoints)
-				if (dataPoint.getClusterId() == i)
+				if (dataPoint.getClusterLabel().equals("c" + i))
 					series.add(dataPoint.getDensityFeatures()[0], dataPoint.getDensityFeatures()[1]);
 				datasetDensity.addSeries(series);
 		}
