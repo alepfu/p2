@@ -42,7 +42,7 @@ public class DataGenerator {
 	/**
 	 * Number of clusters to be generated.
 	 */
-	static int numClusters = 5;
+	static int numClusters = 2;
 	
 	/**
 	 * Number of generated points per cluster, meaningful values range from 100 to 1,000,000. 
@@ -119,9 +119,6 @@ public class DataGenerator {
 		
 		//Export data points to file
 		saveDataPointsToFile(dataPoints, exportDir + "/data_" + timeStart + ".csv");
-		
-		//Export true clustering to file
-		saveClusteringToFile(exportDir + "/clustering_" + timeStart + ".csv");
 		
 		//Plotting
 		try {
@@ -314,33 +311,6 @@ public class DataGenerator {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
-	
-	/**
-	 * Exports the clustering to a file, so that later it can be load by Elki as the true clustering.
-	 * File format, e.g. "1 1 1 2 2 2 -1 label" where non-negative numbers are cluster assignments, negative numbers are noise clusters.
-	 * @param file
-	 */
-	@Deprecated
-	private static void saveClusteringToFile(String filename) {
-		
-		System.out.println("Export clustering to file ...");
-		
-		StringBuilder builder = new StringBuilder();
-		for (int i = 0; i < numClusters; i++)
-			for (int j = 0; j < numPointsPerCluster; j++)
-				builder.append((i + 1) + " ");
-		builder.append("True_clustering\n");
-		
-		try {
-			FileWriter writer = new FileWriter(new File(filename));
-			writer.write(builder.toString());
-			writer.flush();
-			writer.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
 	}
 	
 	/**

@@ -1,6 +1,8 @@
 package p2.clustering;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -20,7 +22,6 @@ import de.lmu.ifi.dbs.elki.database.Database;
 import de.lmu.ifi.dbs.elki.database.StaticArrayDatabase;
 import de.lmu.ifi.dbs.elki.database.ids.DBIDIter;
 import de.lmu.ifi.dbs.elki.database.ids.DBIDRange;
-import de.lmu.ifi.dbs.elki.database.ids.integer.SimpleDBIDFactory;
 import de.lmu.ifi.dbs.elki.database.relation.Relation;
 import de.lmu.ifi.dbs.elki.datasource.ArrayAdapterDatabaseConnection;
 import de.lmu.ifi.dbs.elki.datasource.FileBasedDatabaseConnection;
@@ -28,10 +29,10 @@ import de.lmu.ifi.dbs.elki.datasource.filter.FixedDBIDsFilter;
 import de.lmu.ifi.dbs.elki.datasource.filter.ObjectFilter;
 import de.lmu.ifi.dbs.elki.datasource.parser.NumberVectorLabelParser;
 import de.lmu.ifi.dbs.elki.distance.distancefunction.minkowski.EuclideanDistanceFunction;
+import de.lmu.ifi.dbs.elki.evaluation.clustering.ClusterContingencyTable;
 import de.lmu.ifi.dbs.elki.index.tree.spatial.rstarvariants.rstar.RStarTreeFactory;
 import de.lmu.ifi.dbs.elki.utilities.ClassGenericsUtil;
 import de.lmu.ifi.dbs.elki.utilities.optionhandling.parameterization.ListParameterization;
-import p2.elki.ClusterContingencyTable;
 
 public class IntegratedRunner {
 
@@ -44,15 +45,20 @@ public class IntegratedRunner {
 	private double[][] data;
 	private Clustering<Model> trueClustering;	
 	
-	private static String filenameData = "/home/alepfu/Desktop/P2_export/data_1496180670840.csv";
 	
-	@Deprecated
-	private static String filenameClustering = "/home/alepfu/Desktop/P2_export/clustering_1496180670840.csv";
 	
-
+	private final static String nr = "1496190450581";
+	
+	private final static String filename = "/home/alepfu/Desktop/P2_export/data_" + nr + ".csv";
+	
+	/**
+	 * Directory for exported files.
+	 */
+	static String exportDir = "/home/alepfu/Desktop/AMI";
+	
 	public static void main(String[] args) {
 		
-		IntegratedRunner runner = new IntegratedRunner(filenameData);
+		IntegratedRunner runner = new IntegratedRunner(filename);
 		
 		ExtData extData;
 		ExtKMeansClustering extKMeansClustering;
@@ -61,24 +67,32 @@ public class IntegratedRunner {
 		//KMeans
 		extData = new ExtData(runner.dataGauss, null);  //1st run has no dummy information yet
 		extKMeansClustering = runner.runKMeans(extData);  
-		runner.evaluateClustering(extKMeansClustering.getClustering());
-/*		
+		saveClusteringToFile(exportDir + "/kmeans_1.csv", extKMeansClustering.getClustering());
+				
 		//DBSCAN
 		extData = new ExtData(runner.dataDensity, extKMeansClustering.getDummy());
-		extDBSCANClustering = runner.runDBSCANSuccessively(extData);
-		runner.evaluateClusteringToGroundTruth(extDBSCANClustering.getClustering());
-				
+		extDBSCANClustering = runner.runDBSCAN(extData);
+		saveClusteringToFile(exportDir + "/dbscan_1.csv", extDBSCANClustering.getClustering());
+		
 		//KMeans
 		extData = new ExtData(runner.dataGauss, extDBSCANClustering.getDummy());
 		extKMeansClustering = runner.runKMeans(extData);
-		runner.evaluateClusteringToGroundTruth(extKMeansClustering.getClustering());
+		saveClusteringToFile(exportDir + "/kmeans_2.csv", extKMeansClustering.getClustering());
 		
 		//DBSCAN
-		/*
-		extDensityData = new ExtDensityData(runner.dataDensity, extKMeansClustering.getDummy());
-		extDBSCANClustering = runner.runDBSCAN(extDensityData);
-		System.out.println(runner.evaluateClustering(extDBSCANClustering.getClustering()));
-*/		
+		extData = new ExtData(runner.dataDensity, extKMeansClustering.getDummy());
+		extDBSCANClustering = runner.runDBSCAN(extData);
+		saveClusteringToFile(exportDir + "/dbscan_2.csv", extDBSCANClustering.getClustering());
+		
+		//KMeans
+		extData = new ExtData(runner.dataGauss, extDBSCANClustering.getDummy());
+		extKMeansClustering = runner.runKMeans(extData);
+		saveClusteringToFile(exportDir + "/kmeans_3.csv", extKMeansClustering.getClustering());
+		
+		//DBSCAN
+		extData = new ExtData(runner.dataDensity, extKMeansClustering.getDummy());
+		extDBSCANClustering = runner.runDBSCAN(extData);
+		saveClusteringToFile(exportDir + "/dbscan_3.csv", extDBSCANClustering.getClustering());
 		
 		System.out.println("\nFinished.");
 	}
@@ -100,13 +114,12 @@ public class IntegratedRunner {
 		dataGauss = dataUtil.loadGaussianData();
 		dataDensity = dataUtil.loadDensityData();
 		
-		//gtClustering = getGroundTruthClustering(numClusters, numPointsPerCluster);
-		
 		try {
 			
 			trueClustering = getTrueClustering();
+			saveClusteringToFile(exportDir + "/true.csv", trueClustering);
 			
-		} catch (FileNotFoundException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
@@ -149,58 +162,12 @@ public class IntegratedRunner {
 	}
 	
 	/**
-	 * Just a single DBSCAN run on the extended data.
-	 * 
-	 * @param extDensityData
-	 * @return
-	 */
-	private ExtDBSCANClustering runDBSCANSingle(ExtData extData) {
-		
-		ArrayAdapterDatabaseConnection densityDBConn = new ArrayAdapterDatabaseConnection(extData.getExtData());
-		ListParameterization densityDBParams = new ListParameterization();
-		densityDBParams.addParameter(AbstractDatabase.Parameterizer.DATABASE_CONNECTION_ID, densityDBConn);
-		densityDBParams.addParameter(AbstractDatabase.Parameterizer.INDEX_ID, RStarTreeFactory.class);
-		Database densityDB = ClassGenericsUtil.parameterizeOrAbort(StaticArrayDatabase.class, densityDBParams);
-		densityDB.initialize();
-		
-		Relation<NumberVector> densityRel = densityDB.getRelation(TypeUtil.NUMBER_VECTOR_FIELD);
-	    DBIDRange densityIDs = (DBIDRange) densityRel.getDBIDs();
-		
-		int minPts = 10;							
-		double epsilon = 1.0;					
-		
-		ListParameterization dbscanParams = new ListParameterization();
-		dbscanParams.addParameter(DBSCAN.Parameterizer.EPSILON_ID, epsilon);
-		dbscanParams.addParameter(DBSCAN.Parameterizer.MINPTS_ID, minPts);
-		dbscanParams.addParameter(DBSCAN.DISTANCE_FUNCTION_ID, EuclideanDistanceFunction.class);
-
-		DBSCAN<DoubleVector> dbscan = ClassGenericsUtil.parameterizeOrAbort(DBSCAN.class, dbscanParams);
-		Clustering<Model> dbscanClustering = dbscan.run(densityDB);
-		
-		int numFoundClusters = dbscanClustering.getAllClusters().size();
-		
-		double[][] dbscanDummy = new double[numPoints][numFoundClusters];
-		
-		int clusterID = 0;
-		for (Cluster<Model> c : dbscanClustering.getAllClusters()) {
-			for (DBIDIter it = c.getIDs().iter(); it.valid(); it.advance()) 
-				dbscanDummy[densityIDs.getOffset(it)][clusterID] = 1.0;
-			++clusterID;
-		}
-		
-		ExtDBSCANClustering extClustering = new ExtDBSCANClustering(dbscanClustering, dbscanDummy, densityIDs);
-		
-		return extClustering;
-	}
-	
-	
-	/**
 	 * Runs DBSCAN clustering using data extended by KMeans cluster labels in dummy encoding.
 	 * Since we know k (the number of clusters) we do multiple runs of DBSCAN with increasing epsilon until k clusters are found.
 	 * 
 	 * @return A DBSCAN clustering result including the found cluster labels in dummy encoding.
 	 */
-	private ExtDBSCANClustering runDBSCANSuccessively(ExtData extData) {
+	private ExtDBSCANClustering runDBSCAN(ExtData extData) {
 		
 		ArrayAdapterDatabaseConnection densityDBConn = new ArrayAdapterDatabaseConnection(extData.getExtData());
 		ListParameterization densityDBParams = new ListParameterization();
@@ -238,6 +205,9 @@ public class IntegratedRunner {
 		} while (numFoundClusters != numClusters);
 		
 		
+		//TODO das stripping wieder rausnehem, Performance!
+		
+		
 		//Strip 0-element clusters
 		Clustering<Model> stripped = new Clustering<Model>("DBSCAN Clustering", "dbscan-clustering");
 		if (numFoundClusters != dbscanClustering.getAllClusters().size()) {
@@ -263,44 +233,6 @@ public class IntegratedRunner {
 	}
 	
 	/**
-	 * Generates the ground truth clustering.
-	 * Use for evaluation of clusterings.
-	 * With knowing the number of clusters and the number of points per cluster, this reduces to a
-	 * simple numbering procedure.
-	 * @param numClusters The number of clusters.
-	 * @param numPointsPerCluster The number of points per cluster.
-	 * @return The ground truth clustering.
-	 */
-	@Deprecated
-	private Clustering<Model> getGroundTruthClustering(int numClusters, int numPointsPerCluster) {
-		
-		Clustering<Model> gtClustering = new Clustering<Model>("Ground truth", "gd");
-		SimpleDBIDFactory idFactory = new SimpleDBIDFactory();
-		DBIDRange ids = idFactory.generateStaticDBIDRange(numClusters * numPointsPerCluster);
-
-		//DEBUG log ground truth clustering
-		StringBuilder log = new StringBuilder();
-		log.append("Ground Truth Clustering:\n");
-		
-		for (int i = 0; i < numClusters; i++) {
-			
-			Cluster<Model> gtCluster = new Cluster<Model>(Integer.toString(i), ids.slice(i * numPointsPerCluster, (i + 1) * numPointsPerCluster));
-			gtClustering.addToplevelCluster(gtCluster);
-			
-			//DEBUG log ground truth clustering
-			log.append("#" + i + " [" + gtCluster.size() + "]");
-			for (DBIDIter it = gtCluster.getIDs().iter(); it.valid(); it.advance())
-				log.append(" " + ids.getOffset(it));
-			log.append("\n");
-		}
-		
-		//DEBUG log ground truth clustering
-		System.out.print(log);
-
-		return gtClustering;
-	}
-	
-	/**
 	 * Loads the true clustering from the data file
 	 * Use for evaluation of clusterings.
 	 * @return The true clustering.
@@ -311,7 +243,7 @@ public class IntegratedRunner {
 		filterlist.add(new FixedDBIDsFilter(1));
 		
 		NumberVectorLabelParser<DoubleVector> parser = new NumberVectorLabelParser<>(DoubleVector.FACTORY);
-		FileBasedDatabaseConnection dbc = new FileBasedDatabaseConnection(filterlist, parser, filenameData);
+		FileBasedDatabaseConnection dbc = new FileBasedDatabaseConnection(filterlist, parser, filename);
 		
 		ListParameterization params = new ListParameterization();
 		params.addParameter(AbstractDatabase.Parameterizer.DATABASE_CONNECTION_ID, dbc);
@@ -326,9 +258,9 @@ public class IntegratedRunner {
 		Clustering<Model> clustering = algo.run(db);
 		
 		//DEBUG log clustering
-		StringBuilder log = new StringBuilder();
+		/*StringBuilder log = new StringBuilder();
 		log.append("\nTrue Clustering:\n");
-		int clusterId = 0;
+		int clusterId = 1;
 		for (Cluster<Model> c : clustering.getAllClusters()) {
 			log.append("#" + clusterId + " [" + c.size() + "]");
 			
@@ -343,39 +275,57 @@ public class IntegratedRunner {
 			log.append("\n");
 			++clusterId;
 		}
-		System.out.println(log);
+		System.out.println(log);*/
 		
 		return clustering;
 	}
 
 	/**
-	 * Uses extracted stuff from Elki!
-	 * 
-	 * Compares a clustering with the ground truth clutering using mutual information.
+	 * Compares a clustering with the true clutering using mutual information.
 	 * 
 	 * High mutual information indicates a large reduction in uncertainty;
 	 * low mutual information indicates a small reduction;
 	 * and zero mutual information between two random variables means the variables are independent. 
 	 * 
-	 * @param c Clustering to compare to true clustering
+	 * @param clustering Clustering to compare to true clustering
 	 * @return The mutual information measure
 	 */
-	private void evaluateClustering(Clustering<?> clustering) {
+	private double evaluateClustering(Clustering<?> clustering) {
 		
-		ClusterContingencyTable ct = new ClusterContingencyTable(true, false);
+		ClusterContingencyTable ct = new ClusterContingencyTable(false, false);
 		ct.process(trueClustering, clustering);
 		
-		//DEBUG log
-		System.out.println(ct.toString());
-		
-		double mi = ct.getEntropy().entropyMutualInformation();
-		
-		System.out.println("Mutual information: " + mi);
-	
-		
+		return ct.getEntropy().entropyMutualInformation();
 	}
 	
-	
+	/**
+	 * Exports a clustering to a file.
+	 * Use for evaluation with Matlab implementation of Adjusted Mutual Information.
+	 * File format: e.g. "1 1 1 2 2" would say objects 1-3 are in cluster 1 and objects 4-5 are in cluster 2.
+	 * @param filename A filename
+	 * @param clustering A clustering 
+	 */
+	private static void saveClusteringToFile(String filename, Clustering<? extends Model> clustering) {
+		
+		StringBuilder log = new StringBuilder();
+		
+		int clusterLabel = 1;
+		for (Cluster<? extends Model> cluster : clustering.getAllClusters()) {
+			for (int i = 0; i < cluster.getIDs().size(); i++)
+				log.append(clusterLabel + " ");
+			++clusterLabel;
+		}
+		
+		try {
+			FileWriter writer = new FileWriter(new File(filename));
+			writer.write(log.toString());
+			writer.flush();
+			writer.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+	}
 	
 
 }

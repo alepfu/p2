@@ -22,9 +22,9 @@ public class ExtKMeansClustering {
 		this.ids = ids;
 		
 		//DEBUG log the clustering
-		StringBuilder log = new StringBuilder();
+		/*StringBuilder log = new StringBuilder();
 		log.append("\nKMeans Clustering:\n");
-		int clusterId = 0;
+		int clusterId = 1;
 		for (Cluster<KMeansModel> c : clustering.getAllClusters()) {
 			log.append("#" + clusterId + " [" + c.size() + "]");
 			
@@ -39,8 +39,7 @@ public class ExtKMeansClustering {
 			log.append("\n");
 			++clusterId;
 		}
-		
-		System.out.println(log);
+		System.out.println(log);*/
 
 		//DEBUG log dummy encoding
 		/*log = new StringBuilder();
@@ -61,4 +60,7 @@ public class ExtKMeansClustering {
 	public double[][] getDummy() {
 		return dummy;
 	}
+
+
+	
 }
