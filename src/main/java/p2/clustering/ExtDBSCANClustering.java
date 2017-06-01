@@ -22,7 +22,7 @@ public class ExtDBSCANClustering {
 		this.ids = ids;
 		
 		//DEBUG log clustering
-		/*StringBuilder log = new StringBuilder();
+		StringBuilder log = new StringBuilder();
 		log.append("\nDBSCAN Clustering:\n");
 		int clusterId = 1;
 		for (Cluster<Model> c : clustering.getAllClusters()) {
@@ -39,7 +39,7 @@ public class ExtDBSCANClustering {
 			log.append("\n");
 			++clusterId;
 		}
-		System.out.println(log);*/
+		System.out.println(log);
 		
 		//DEBUG log dummy encoding
 		/*log = new StringBuilder();

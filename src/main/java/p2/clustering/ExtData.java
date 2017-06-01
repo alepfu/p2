@@ -1,5 +1,7 @@
 package p2.clustering;
 
+import java.text.NumberFormat;
+
 public class ExtData {
 	
 	private double[][] data;
@@ -52,21 +54,20 @@ public class ExtData {
 				extData[row][col] = dummy[row][col - numColsData];		
 		
 		
-		//DEBUG: print data with normalized dummy encoding attached
-		/*NumberFormat nf = NumberFormat.getInstance();
+		//DEBUG log
+		NumberFormat nf = NumberFormat.getInstance();
 		nf.setMinimumFractionDigits(2);
 		nf.setMaximumFractionDigits(2);
-		StringBuilder log = new StringBuilder("Extended Gauss Data:\n");
-		for (int row = 0; row < numRows; row++) {
+		StringBuilder log = new StringBuilder("\nExtended data:\n");
+		for (int row = 0; row < 3; row++) {
 			for (int col = 0; col < numColsConcat; col++)
 				log.append(nf.format(extData[row][col]) + " ");
 			log.append("\n");
 		}
-		System.out.println(log);*/
+		log.append("...");
+		System.out.println(log);
 		
 		return extData;
 	}
-	
-	
 
 }

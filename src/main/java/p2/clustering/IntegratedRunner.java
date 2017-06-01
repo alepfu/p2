@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import de.lmu.ifi.dbs.elki.algorithm.clustering.DBSCAN;
@@ -38,18 +37,20 @@ public class IntegratedRunner {
 
 	private int numDimensions;
 	private int numClusters;
-	private int numPointsPerCluster;
+	private int numPointsCluster;
 	private int numPoints;
 	private double[][] dataGauss;
 	private double[][] dataDensity;
 	private double[][] data;
 	private Clustering<Model> trueClustering;	
 	
+	//private final static String nr = "1496272536499";
+	
+	private final static String directory = "/home/alepfu/Desktop/P2_export";
+	
+	private final static String filename = directory + "/" + "data_5d_3c_1000p_overlap_7seed" + ".csv";
 	
 	
-	private final static String nr = "1496190450581";
-	
-	private final static String filename = "/home/alepfu/Desktop/P2_export/data_" + nr + ".csv";
 	
 	/**
 	 * Directory for exported files.
@@ -61,11 +62,31 @@ public class IntegratedRunner {
 		IntegratedRunner runner = new IntegratedRunner(filename);
 		
 		ExtData extData;
-		ExtKMeansClustering extKMeansClustering;
-		ExtDBSCANClustering extDBSCANClustering;
+		ExtKMeansClustering extKMeansClustering = null;
+		ExtDBSCANClustering extDBSCANClustering = null;
+		
+		for (int r = 1; r <= 12; r++) {
+			
+			//KMeans
+			if (r == 1)
+				extData = new ExtData(runner.dataGauss, null);  //First run has no dummy information yet
+			else
+				extData = new ExtData(runner.dataGauss, extDBSCANClustering.getDummy());
+			extKMeansClustering = runner.runKMeans(extData);  
+			saveClusteringToFile(exportDir + "/run_" + r + ".csv", extKMeansClustering.getClustering());
+			
+			++r;
+			
+			//DBSCAN
+			extData = new ExtData(runner.dataDensity, extKMeansClustering.getDummy());
+			extDBSCANClustering = runner.runDBSCAN(extData);
+			saveClusteringToFile(exportDir + "/run_" + r + ".csv", extDBSCANClustering.getClustering());
+		}
+			
+		/*
 		
 		//KMeans
-		extData = new ExtData(runner.dataGauss, null);  //1st run has no dummy information yet
+		extData = new ExtData(runner.dataGauss, null);  //First run has no dummy information yet
 		extKMeansClustering = runner.runKMeans(extData);  
 		saveClusteringToFile(exportDir + "/kmeans_1.csv", extKMeansClustering.getClustering());
 				
@@ -94,6 +115,8 @@ public class IntegratedRunner {
 		extDBSCANClustering = runner.runDBSCAN(extData);
 		saveClusteringToFile(exportDir + "/dbscan_3.csv", extDBSCANClustering.getClustering());
 		
+		*/
+		
 		System.out.println("\nFinished.");
 	}
 	
@@ -106,15 +129,19 @@ public class IntegratedRunner {
 
 		DataLoaderUtil dataUtil = new DataLoaderUtil(file);	
 		
+		System.out.println("Loading data ...");
+		
 		numDimensions = dataUtil.getNumDimensions();
 		numClusters = dataUtil.getNumClusters();
-		numPointsPerCluster = dataUtil.getNumPointsPerCluster();
-		numPoints = numClusters * numPointsPerCluster;
+		numPointsCluster = dataUtil.getNumPointsCluster();
+		numPoints = numClusters * numPointsCluster;
 		data = dataUtil.loadData();
 		dataGauss = dataUtil.loadGaussianData();
 		dataDensity = dataUtil.loadDensityData();
 		
 		try {
+			
+			System.out.println("Generate true clustering ...");
 			
 			trueClustering = getTrueClustering();
 			saveClusteringToFile(exportDir + "/true.csv", trueClustering);
@@ -131,7 +158,11 @@ public class IntegratedRunner {
 	 */
 	private ExtKMeansClustering runKMeans(ExtData extDataGauss) {
 		
-		ArrayAdapterDatabaseConnection gaussDBConn = new ArrayAdapterDatabaseConnection(extDataGauss.getExtData());
+		System.out.println("Running KMeans ...");
+		
+		double[][] dataWithDummy = extDataGauss.getExtData();
+		
+		ArrayAdapterDatabaseConnection gaussDBConn = new ArrayAdapterDatabaseConnection(dataWithDummy);
 		ListParameterization gaussDBParams = new ListParameterization();
 		gaussDBParams.addParameter(AbstractDatabase.Parameterizer.DATABASE_CONNECTION_ID, gaussDBConn);
 		Database gaussDB = ClassGenericsUtil.parameterizeOrAbort(StaticArrayDatabase.class, gaussDBParams);
@@ -147,8 +178,8 @@ public class IntegratedRunner {
 		KMeansMacQueen<DoubleVector> kmeans = ClassGenericsUtil.parameterizeOrAbort(KMeansMacQueen.class, kmeansParams);
 		Clustering<KMeansModel> kmeansClustering = kmeans.run(gaussDB);
 		
-		double[][] kmeansDummy = new double[numPoints][numClusters];
-		
+		//Generate dummy encoding
+		double[][] kmeansDummy = new double[numPoints][numClusters];		
 		int clusterID = 0;
 		for (Cluster<KMeansModel> c : kmeansClustering.getAllClusters()) {
 			for (DBIDIter it = c.getIDs().iter(); it.valid(); it.advance())
@@ -169,7 +200,11 @@ public class IntegratedRunner {
 	 */
 	private ExtDBSCANClustering runDBSCAN(ExtData extData) {
 		
-		ArrayAdapterDatabaseConnection densityDBConn = new ArrayAdapterDatabaseConnection(extData.getExtData());
+		System.out.println("Running DBSCAN ...");
+		
+		double[][] dataWithDummy = extData.getExtData();
+		
+		ArrayAdapterDatabaseConnection densityDBConn = new ArrayAdapterDatabaseConnection(dataWithDummy);
 		ListParameterization densityDBParams = new ListParameterization();
 		densityDBParams.addParameter(AbstractDatabase.Parameterizer.DATABASE_CONNECTION_ID, densityDBConn);
 		densityDBParams.addParameter(AbstractDatabase.Parameterizer.INDEX_ID, RStarTreeFactory.class);
@@ -182,8 +217,8 @@ public class IntegratedRunner {
 	    //Successively increase epsilon until DBSCAN finds k clusters. 
 		double stepsize = 0.1;
 		int numFoundClusters = 0;
-		int minPts = 10;						//Suggested by Elki = 2 * numDimensions - 1
-		double epsilon = 1.0;					//TODO Is this a good idea? Start big/small?
+		int minPts = 2 * numDimensions - 1;		//Suggested by Elki = 2 * numDimensions - 1
+		double epsilon = 0.5;					
 		Clustering<Model> dbscanClustering;
 		
 		do {
@@ -203,11 +238,7 @@ public class IntegratedRunner {
 					++numFoundClusters;
 
 		} while (numFoundClusters != numClusters);
-		
-		
-		//TODO das stripping wieder rausnehem, Performance!
-		
-		
+
 		//Strip 0-element clusters
 		Clustering<Model> stripped = new Clustering<Model>("DBSCAN Clustering", "dbscan-clustering");
 		if (numFoundClusters != dbscanClustering.getAllClusters().size()) {
@@ -217,9 +248,8 @@ public class IntegratedRunner {
 			dbscanClustering = stripped;
 		}
 		
-		
+		//Generate dummy encoding
 		double[][] dbscanDummy = new double[numPoints][numFoundClusters];
-		
 		int clusterID = 0;
 		for (Cluster<Model> c : dbscanClustering.getAllClusters()) {
 			for (DBIDIter it = c.getIDs().iter(); it.valid(); it.advance()) 

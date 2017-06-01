@@ -10,9 +10,10 @@ public class DataLoaderUtil {
 	private String file;
 	
 	private int numDimensions;
-	private int numPointsPerCluster;
+	private int numPointsCluster;
 	private int numClusters;
 	private int numPoints;
+	private long seed; 
 	private boolean overlapping;
 	
 	private double[][] data;
@@ -39,10 +40,11 @@ public class DataLoaderUtil {
 			br.close();
 			
 			numDimensions = Integer.parseInt(header.get("numDimensions"));
-			numPointsPerCluster = Integer.parseInt(header.get("numPointsPerCluster"));
+			numPointsCluster = Integer.parseInt(header.get("numPointsCluster"));
 			numClusters = Integer.parseInt(header.get("numClusters"));
-			numPoints = numClusters * numPointsPerCluster;
+			numPoints = numClusters * numPointsCluster;
 			overlapping = Boolean.parseBoolean(header.get("overlapping"));
+			seed = Integer.parseInt(header.get("seed"));
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -111,8 +113,8 @@ public class DataLoaderUtil {
 		return numDimensions;
 	}
 
-	public int getNumPointsPerCluster() {
-		return numPointsPerCluster;
+	public int getNumPointsCluster() {
+		return numPointsCluster;
 	}
 
 	public int getNumClusters() {
@@ -122,6 +124,5 @@ public class DataLoaderUtil {
 	public int getNumPoints() {
 		return numPoints;
 	}
-	
 	
 }
