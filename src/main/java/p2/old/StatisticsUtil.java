@@ -14,14 +14,16 @@ public class StatisticsUtil {
 	public double calcSumVar(double[][] a, int numCols, int numRows) {
 		DescriptiveStatistics stats = new DescriptiveStatistics();
 		
-		double sumVarData = 0;
+		double sumVar = 0;
 		for (int col = 0; col < numCols; col++) {
 			for (int row = 0; row < numRows; row++) 
 				stats.addValue(a[row][col]);
-			sumVarData += stats.getVariance();
+			sumVar += stats.getVariance();
 			stats = new DescriptiveStatistics();
 		}
 		
-		return sumVarData;
+		return sumVar;
 	}
+	
+	
 }

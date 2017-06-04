@@ -79,7 +79,7 @@ public class DataLoaderUtil {
 		return data;
 	}
 	
-	public double[][] loadGaussianData() {
+	public double[][] getGaussianData() {
 		
 		if (data == null)
 			data = this.loadData();
@@ -93,7 +93,7 @@ public class DataLoaderUtil {
 		return gaussianData; 
 	}
 	
-	public double[][] loadDensityData() {
+	public double[][] getDensityData() {
 		
 		if (data == null)
 			data = this.loadData();

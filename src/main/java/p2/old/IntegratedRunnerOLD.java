@@ -140,8 +140,8 @@ public class IntegratedRunnerOLD {
 		numPointsCluster = dataUtil.getNumPointsCluster();
 		numPoints = numClusters * numPointsCluster;
 		data = dataUtil.loadData();
-		dataGauss = dataUtil.loadGaussianData();
-		dataDensity = dataUtil.loadDensityData();
+		dataGauss = dataUtil.getGaussianData();
+		dataDensity = dataUtil.getDensityData();
 		
 		try {
 			

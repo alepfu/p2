@@ -30,6 +30,7 @@ import de.lmu.ifi.dbs.elki.datasource.FileBasedDatabaseConnection;
 import de.lmu.ifi.dbs.elki.datasource.filter.FixedDBIDsFilter;
 import de.lmu.ifi.dbs.elki.datasource.filter.ObjectFilter;
 import de.lmu.ifi.dbs.elki.datasource.parser.NumberVectorLabelParser;
+import de.lmu.ifi.dbs.elki.distance.distancefunction.NumberVectorDistanceFunction;
 import de.lmu.ifi.dbs.elki.distance.distancefunction.minkowski.EuclideanDistanceFunction;
 import de.lmu.ifi.dbs.elki.evaluation.clustering.ClusterContingencyTable;
 import de.lmu.ifi.dbs.elki.index.tree.spatial.rstarvariants.rstar.RStarTreeFactory;
@@ -115,18 +116,58 @@ public class IntegratedRunner {
 		 * =====================================
 		 * 
 		 */
-		int numRuns = 100;
+		int numRuns = 10;
 		ExtKMeansClustering kmeans = null;
 		ExtDBSCANClustering dbscan = null;
+		
+		//Normalization 
+		StatisticsUtil statUtil = new StatisticsUtil();
+		System.out.println("SumVarGauss = " + statUtil.calcSumVar(runner.dataGauss, runner.dataGauss[0].length, runner.dataGauss.length));
+		System.out.println("SumVarDensity = " + statUtil.calcSumVar(runner.dataDensity, runner.dataDensity[0].length, runner.dataDensity.length));
+		System.out.println("Do normalization ...");
+		runner.normalizeDensityFeatures();
+		System.out.println("SumVarGauss = " + statUtil.calcSumVar(runner.dataGauss, runner.dataGauss[0].length, runner.dataGauss.length));
+		System.out.println("SumVarDensity = " + statUtil.calcSumVar(runner.dataDensity, runner.dataDensity[0].length, runner.dataDensity.length));
+		//TODO Move normalization to data generator.
+		
+		
+		double[][] extData = null;
 		for (int r = 1; r <= numRuns; r++) {
 			
+			
+			/*
+			 * With keeping dummy enchoding (growing dimensionality from run to run)
+			 * 
+			 *
+			//KMeans on gauss features with dummy encoding (for r > 1) from DBSCAN			
+			if(r == 1)
+				extData = runner.dataGauss;
+			else
+				extData = runner.getExtData(extData, dbscan.getDummy());
+			kmeans = runner.runKMeans(extData);
+			saveClusteringToFile(workDir + "/run_" + (r++) + ".csv", kmeans.getClustering());
+			
+			//DBSCAN on density features with dummy encoding from KMeans
+			extData = runner.getExtData(extData, kmeans.getDummy());
+			System.out.println("Using MinPts = " + (2 * extData[0].length - 1));
+			dbscan = runner.runMultipleDBSCAN(extData, 0.01, 0.01, 2 * extData[0].length - 1);
+			saveClusteringToFile(workDir + "/run_" + r + ".csv", dbscan.getClustering());
+			*/
+			
+			
+			/* Without keeping dummy encoding
+			 * 
+			 * 
+			 */
 			//KMeans on gauss features with dummy encoding (for r > 1) from DBSCAN
 			kmeans = runner.runKMeans(r == 1 ? runner.dataGauss : runner.getExtData(runner.dataGauss, dbscan.getDummy()));
 			saveClusteringToFile(workDir + "/run_" + (r++) + ".csv", kmeans.getClustering());
 			
 			//DBSCAN on density features with dummy encoding from KMeans
-			//dbscan = runner.runSingleDBSCAN(runner.getExtData(runner.dataDensity, kmeans.getDummy()), 5, 2.15);
-			dbscan = runner.runMultipleDBSCAN(runner.getExtData(runner.dataDensity, kmeans.getDummy()), 0.01, 0.01, 5);
+			int minPts = (2 * runner.numDimensions + kmeans.getClustering().getAllClusters().size() - 1);
+			System.out.println("Using MinPts = " + minPts);
+			//dbscan = runner.runSingleDBSCAN(runner.getExtData(runner.dataDensity, kmeans.getDummy()), minPts, 2.15);
+			dbscan = runner.runMultipleDBSCAN(runner.getExtData(runner.dataDensity, kmeans.getDummy()), 0.01, 0.01, minPts);
 			saveClusteringToFile(workDir + "/run_" + r + ".csv", dbscan.getClustering());
 			
 		}
@@ -148,8 +189,19 @@ public class IntegratedRunner {
 		numPointsCluster = dataUtil.getNumPointsCluster();
 		numPoints = numClusters * numPointsCluster;
 		data = dataUtil.loadData();
-		dataGauss = dataUtil.loadGaussianData();
-		dataDensity = dataUtil.loadDensityData();
+		dataGauss = dataUtil.getGaussianData();
+		dataDensity = dataUtil.getDensityData();
+	}
+	
+	private void normalizeDensityFeatures() {
+		
+		StatisticsUtil statUtil = new StatisticsUtil();
+		double sumVarGauss = statUtil.calcSumVar(dataGauss, dataGauss[0].length, dataGauss.length);
+		double sumVarDensity = statUtil.calcSumVar(dataDensity, dataDensity[0].length, dataDensity.length);
+		double factor = Math.sqrt(sumVarGauss / sumVarDensity);
+		for (int row = 0; row < dataDensity.length; row++)
+			for (int col = 0; col < dataDensity[0].length; col++)
+				dataDensity[row][col] *= factor;
 	}
 	
 	/**
@@ -385,24 +437,4 @@ public class IntegratedRunner {
 		return extData;
 	}
 	
-//	/**
-//	 * TODO
-//	 */
-//	public double getMinDistance(double[][] data) {
-//		
-//		int n = data.length;
-//		DescriptiveStatistics stats = new DescriptiveStatistics();
-//		for (int i = 0; i < (n - 1); i++) {
-//			for (int j = i + 1; j < n; j++) {
-//			
-//				double[] p = data[i];
-//				double[] q = data[j];
-//				double sqsum = 0;
-//				for (int d = 0; d < numDimensions; d++) 
-//					sqsum += Math.pow(p[d] - q[d], 2);
-//				stats.addValue(Math.sqrt(sqsum));
-//			}
-//		}
-//		return stats.getMin();
-//	}
 }
