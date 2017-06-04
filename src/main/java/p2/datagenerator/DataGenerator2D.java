@@ -83,11 +83,11 @@ public class DataGenerator2D {
 		Density2DCluster d1 = new Density2DCluster(numPointsCluster, Density2DCluster.TYPE_ARC_UP, dpos1, rand);
 		densityData.addAll(d1.getPoints());
 		
-		double[] dpos2 = {100, 90};
+		double[] dpos2 = {100, 95.08};
 		Density2DCluster d2 = new Density2DCluster(numPointsCluster, Density2DCluster.TYPE_ARC_DOWN, dpos2, rand);
 		densityData.addAll(d2.getPoints());
 		
-		double[] dpos3 = {-35, 10};
+		double[] dpos3 = {-35, 25.2};
 		Density2DCluster d3 = new Density2DCluster(numPointsCluster, Density2DCluster.TYPE_CIRCLE, dpos3, rand);
 		densityData.addAll(d3.getPoints());
 		

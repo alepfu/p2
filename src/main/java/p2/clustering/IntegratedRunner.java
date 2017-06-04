@@ -85,52 +85,52 @@ public class IntegratedRunner {
 		
 		IntegratedRunner runner = new IntegratedRunner(workDir + "/data.csv");
 		
-/*		//KMeans runs on the whole data set, the gaussian features and the density features
+		/**
+		 * 
+		 * 
+		 * Initial performance analysis for full and partial data
+		 * =======================================================
+		 * 
+		 */
+		/*//KMeans runs
 		ExtKMeansClustering kmeans1 = runner.runKMeans(runner.data);
-		saveClusteringToFile(workDir + "/kmeans_whole.csv", kmeans1.getClustering());
+		saveClusteringToFile(workDir + "/kmeans_full.csv", kmeans1.getClustering());
 		ExtKMeansClustering kmeans2 = runner.runKMeans(runner.dataGauss);
 		saveClusteringToFile(workDir + "/kmeans_gauss.csv", kmeans2.getClustering());
 		ExtKMeansClustering kmeans3 = runner.runKMeans(runner.dataDensity);
 		saveClusteringToFile(workDir + "/kmeans_density.csv", kmeans3.getClustering());
-		
-		//DBSCAN runs on the whole data set, the gaussian features and the density features
-		double stepsize = 0.1;
-		double initEpsilon = 1.5;
-		int minPts = 5;
-		ExtDBSCANClustering dbscan1 = runner.runMultipleDBSCAN(runner.data, 3.0, 1.0, minPts);
-		saveClusteringToFile(workDir + "/dbscan_whole.csv", dbscan1.getClustering());
-		ExtDBSCANClustering dbscan2 = runner.runMultipleDBSCAN(runner.dataGauss, 33.0, 1.0, 3);
+				
+		//DBSCAN runs
+		ExtDBSCANClustering dbscan1 = runner.runMultipleDBSCAN(runner.data, 44.0, 1.0, 5);
+		saveClusteringToFile(workDir + "/dbscan_full.csv", dbscan1.getClustering());
+		ExtDBSCANClustering dbscan2 = runner.runMultipleDBSCAN(runner.dataGauss, 44.0, 1.0, 5);
 		saveClusteringToFile(workDir + "/dbscan_gauss.csv", dbscan2.getClustering());
-		*/ExtDBSCANClustering dbscan3 = runner.runMultipleDBSCAN(runner.dataDensity, 0.001, 0.1, 5);
-		saveClusteringToFile(workDir + "/dbscan_density.csv", dbscan3.getClustering());
-
-		//TODO parameter für guten run dbscan finden
+		ExtDBSCANClustering dbscan3 = runner.runMultipleDBSCAN(runner.dataDensity, 0.05, 0.1, 5);
+		saveClusteringToFile(workDir + "/dbscan_density.csv", dbscan3.getClustering());*/
 		
-		
-	/*	
-		
-		//MinPTS = 2 * numDimensions - 1
-		
-		
-		//Integrated run
-		int numRuns = 48;
-		double[][] extData;
+		/**
+		 * 
+		 * 
+		 * Running DBSCAN and KMeans alternately
+		 * =====================================
+		 * 
+		 */
+		int numRuns = 100;
 		ExtKMeansClustering kmeans = null;
 		ExtDBSCANClustering dbscan = null;
 		for (int r = 1; r <= numRuns; r++) {
 			
-			//DBSCAN
-			dbscan = runner.runMultipleDBSCAN(r == 1 ? runner.dataDensity : runner.getExtData(runner.dataDensity, kmeans.getDummy()),
-					1.5, 0.5, 5);  
+			//KMeans on gauss features with dummy encoding (for r > 1) from DBSCAN
+			kmeans = runner.runKMeans(r == 1 ? runner.dataGauss : runner.getExtData(runner.dataGauss, dbscan.getDummy()));
+			saveClusteringToFile(workDir + "/run_" + (r++) + ".csv", kmeans.getClustering());
+			
+			//DBSCAN on density features with dummy encoding from KMeans
+			//dbscan = runner.runSingleDBSCAN(runner.getExtData(runner.dataDensity, kmeans.getDummy()), 5, 2.15);
+			dbscan = runner.runMultipleDBSCAN(runner.getExtData(runner.dataDensity, kmeans.getDummy()), 0.01, 0.01, 5);
 			saveClusteringToFile(workDir + "/run_" + r + ".csv", dbscan.getClustering());
 			
-			++r;
-	
-			//KMeans
-			kmeans = runner.runKMeans(runner.getExtData(runner.dataGauss, dbscan.getDummy()));
-			saveClusteringToFile(workDir + "/run_" + r + ".csv", kmeans.getClustering());
 		}
-	*/		
+		
 		System.out.println("\nFinished.");
 	}
 	
@@ -219,6 +219,13 @@ public class IntegratedRunner {
 		DBSCAN<DoubleVector> dbscan = ClassGenericsUtil.parameterizeOrAbort(DBSCAN.class, dbscanParams);
 		Clustering<Model> dbscanClustering = dbscan.run(densityDB);
 		
+		//Strip 0-element clusters
+		Clustering<Model> stripped = new Clustering<Model>("DBSCAN Clustering", "dbscan-clustering");
+		for (Cluster<Model> c : dbscanClustering.getAllClusters())
+			if (c.size() > 0)
+				stripped.addToplevelCluster(c);
+		dbscanClustering = stripped;
+		
 		//Generate dummy encoding
 		double[][] dbscanDummy = new double[numPoints][dbscanClustering.getAllClusters().size()];
 		int clusterID = 0;
@@ -266,9 +273,7 @@ public class IntegratedRunner {
 			
 			DBSCAN<DoubleVector> dbscan = ClassGenericsUtil.parameterizeOrAbort(DBSCAN.class, dbscanParams);
 			dbscanClustering = dbscan.run(densityDB);
-			
-			//System.out.println("eps = " + epsilon);
-			
+
 			epsilon += stepsize;
 			
 			//Don't account for 0-element clusters
@@ -279,6 +284,8 @@ public class IntegratedRunner {
 
 		} while (numFoundClusters != numClusters);
 
+		System.out.println("Final epsilon = " + (epsilon - stepsize));
+		
 		//Strip 0-element clusters
 		Clustering<Model> stripped = new Clustering<Model>("DBSCAN Clustering", "dbscan-clustering");
 		if (numFoundClusters != dbscanClustering.getAllClusters().size()) {
