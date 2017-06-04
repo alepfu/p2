@@ -4,9 +4,9 @@ import java.util.Arrays;
 
 public class DataPoint {
 	
-	double[] gaussFeatures;
-	double[] densityFeatures;
-	String clusterLabel;
+	private double[] gaussFeatures;
+	private double[] densityFeatures;
+	private String clusterLabel;
 	
 	public DataPoint(double[] gaussFeatures, double[] densityFeatures, String cluserLabel) {
 		

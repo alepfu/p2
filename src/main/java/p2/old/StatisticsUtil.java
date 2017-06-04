@@ -1,4 +1,4 @@
-package p2.clustering;
+package p2.old;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 

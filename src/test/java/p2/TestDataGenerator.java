@@ -4,7 +4,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import p2.datagenerator.DataGenerator;
+import p2.old.DataGeneratorOLD;
 
 public class TestDataGenerator {
 
@@ -26,7 +26,7 @@ public class TestDataGenerator {
 		
 			String[] args = {"--seed", i+"", "--overlap"};
 			
-			DataGenerator.main(args);
+			DataGeneratorOLD.main(args);
 		
 		}
 		

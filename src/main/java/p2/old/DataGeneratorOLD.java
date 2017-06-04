@@ -1,4 +1,4 @@
-package p2.datagenerator;
+package p2.old;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -21,7 +21,9 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
-public class DataGenerator {
+import p2.datagenerator.DataPoint;
+
+public class DataGeneratorOLD {
 	
 	/**
 	 * Seed for random number generation

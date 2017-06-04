@@ -1,4 +1,4 @@
-package p2.clustering;
+package p2.util;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -14,7 +14,6 @@ public class DataLoaderUtil {
 	private int numClusters;
 	private int numPoints;
 	private long seed; 
-	private boolean overlapping;
 	
 	private double[][] data;
 	
@@ -43,7 +42,6 @@ public class DataLoaderUtil {
 			numPointsCluster = Integer.parseInt(header.get("numPointsCluster"));
 			numClusters = Integer.parseInt(header.get("numClusters"));
 			numPoints = numClusters * numPointsCluster;
-			overlapping = Boolean.parseBoolean(header.get("overlapping"));
 			seed = Integer.parseInt(header.get("seed"));
 
 		} catch (Exception e) {
