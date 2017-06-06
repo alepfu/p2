@@ -1,17 +1,23 @@
 package p2.clustering;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartFrame;
+import org.jfree.chart.ChartUtilities;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 
 import de.lmu.ifi.dbs.elki.algorithm.clustering.DBSCAN;
 import de.lmu.ifi.dbs.elki.algorithm.clustering.kmeans.KMeansMacQueen;
-import de.lmu.ifi.dbs.elki.algorithm.clustering.trivial.ByLabelClustering;
 import de.lmu.ifi.dbs.elki.data.Cluster;
 import de.lmu.ifi.dbs.elki.data.Clustering;
 import de.lmu.ifi.dbs.elki.data.DoubleVector;
@@ -24,15 +30,10 @@ import de.lmu.ifi.dbs.elki.database.Database;
 import de.lmu.ifi.dbs.elki.database.StaticArrayDatabase;
 import de.lmu.ifi.dbs.elki.database.ids.DBIDIter;
 import de.lmu.ifi.dbs.elki.database.ids.DBIDRange;
+import de.lmu.ifi.dbs.elki.database.ids.DBIDs;
 import de.lmu.ifi.dbs.elki.database.relation.Relation;
 import de.lmu.ifi.dbs.elki.datasource.ArrayAdapterDatabaseConnection;
-import de.lmu.ifi.dbs.elki.datasource.FileBasedDatabaseConnection;
-import de.lmu.ifi.dbs.elki.datasource.filter.FixedDBIDsFilter;
-import de.lmu.ifi.dbs.elki.datasource.filter.ObjectFilter;
-import de.lmu.ifi.dbs.elki.datasource.parser.NumberVectorLabelParser;
-import de.lmu.ifi.dbs.elki.distance.distancefunction.NumberVectorDistanceFunction;
 import de.lmu.ifi.dbs.elki.distance.distancefunction.minkowski.EuclideanDistanceFunction;
-import de.lmu.ifi.dbs.elki.evaluation.clustering.ClusterContingencyTable;
 import de.lmu.ifi.dbs.elki.index.tree.spatial.rstarvariants.rstar.RStarTreeFactory;
 import de.lmu.ifi.dbs.elki.utilities.ClassGenericsUtil;
 import de.lmu.ifi.dbs.elki.utilities.optionhandling.parameterization.ListParameterization;
@@ -77,7 +78,7 @@ public class IntegratedRunner {
 	private double[][] dataDensity;
 	
 	/**
-	 * Working direcktory
+	 * Working directory
 	 */
 	private final static String workDir = "/home/alepfu/Desktop/P2";
 	
@@ -86,6 +87,16 @@ public class IntegratedRunner {
 		
 		IntegratedRunner runner = new IntegratedRunner(workDir + "/data.csv");
 		
+		//Normalization 			
+		StatisticsUtil statUtil = new StatisticsUtil();			//TODO Move normalization to data generator.
+		System.out.println("SumVarGauss = " + statUtil.calcSumVar(runner.dataGauss, runner.dataGauss[0].length, runner.dataGauss.length));
+		System.out.println("SumVarDensity = " + statUtil.calcSumVar(runner.dataDensity, runner.dataDensity[0].length, runner.dataDensity.length));
+		System.out.println("Do normalization ...");
+		runner.normalizeDensityFeatures();
+		System.out.println("SumVarGauss = " + statUtil.calcSumVar(runner.dataGauss, runner.dataGauss[0].length, runner.dataGauss.length));
+		System.out.println("SumVarDensity = " + statUtil.calcSumVar(runner.dataDensity, runner.dataDensity[0].length, runner.dataDensity.length));
+		
+		
 		/**
 		 * 
 		 * 
@@ -93,21 +104,26 @@ public class IntegratedRunner {
 		 * =======================================================
 		 * 
 		 */
-		/*//KMeans runs
+		//KMeans runs
 		ExtKMeansClustering kmeans1 = runner.runKMeans(runner.data);
 		saveClusteringToFile(workDir + "/kmeans_full.csv", kmeans1.getClustering());
 		ExtKMeansClustering kmeans2 = runner.runKMeans(runner.dataGauss);
 		saveClusteringToFile(workDir + "/kmeans_gauss.csv", kmeans2.getClustering());
+		plotKMeansClustering(kmeans2.getClustering(), runner.dataGauss, kmeans2.getIds(), workDir + "/kmeans_gauss.jpeg");
 		ExtKMeansClustering kmeans3 = runner.runKMeans(runner.dataDensity);
 		saveClusteringToFile(workDir + "/kmeans_density.csv", kmeans3.getClustering());
-				
+		plotKMeansClustering(kmeans3.getClustering(), runner.dataDensity, kmeans3.getIds(), workDir + "/kmeans_density.jpeg");
+		
 		//DBSCAN runs
-		ExtDBSCANClustering dbscan1 = runner.runMultipleDBSCAN(runner.data, 44.0, 1.0, 5);
+		ExtDBSCANClustering dbscan1 = runner.runMultipleDBSCAN(runner.data, 40.0, 1.0, 5);
 		saveClusteringToFile(workDir + "/dbscan_full.csv", dbscan1.getClustering());
-		ExtDBSCANClustering dbscan2 = runner.runMultipleDBSCAN(runner.dataGauss, 44.0, 1.0, 5);
+		ExtDBSCANClustering dbscan2 = runner.runSingleDBSCAN(runner.dataGauss, 5, 2.0);
 		saveClusteringToFile(workDir + "/dbscan_gauss.csv", dbscan2.getClustering());
+		plotDBSCANClustering(dbscan2.getClustering(), runner.dataGauss, dbscan2.getIds(), workDir + "/dbscan_gauss.jpeg");
 		ExtDBSCANClustering dbscan3 = runner.runMultipleDBSCAN(runner.dataDensity, 0.05, 0.1, 5);
-		saveClusteringToFile(workDir + "/dbscan_density.csv", dbscan3.getClustering());*/
+		saveClusteringToFile(workDir + "/dbscan_density.csv", dbscan3.getClustering());
+		plotDBSCANClustering(dbscan3.getClustering(), runner.dataDensity, dbscan3.getIds(), workDir + "/dbscan_density.jpeg");
+		
 		
 		/**
 		 * 
@@ -116,23 +132,27 @@ public class IntegratedRunner {
 		 * =====================================
 		 * 
 		 */
-		int numRuns = 10;
+		int numRuns = 6;
 		ExtKMeansClustering kmeans = null;
 		ExtDBSCANClustering dbscan = null;
 		
-		//Normalization 
-		StatisticsUtil statUtil = new StatisticsUtil();
-		System.out.println("SumVarGauss = " + statUtil.calcSumVar(runner.dataGauss, runner.dataGauss[0].length, runner.dataGauss.length));
-		System.out.println("SumVarDensity = " + statUtil.calcSumVar(runner.dataDensity, runner.dataDensity[0].length, runner.dataDensity.length));
-		System.out.println("Do normalization ...");
-		runner.normalizeDensityFeatures();
-		System.out.println("SumVarGauss = " + statUtil.calcSumVar(runner.dataGauss, runner.dataGauss[0].length, runner.dataGauss.length));
-		System.out.println("SumVarDensity = " + statUtil.calcSumVar(runner.dataDensity, runner.dataDensity[0].length, runner.dataDensity.length));
-		//TODO Move normalization to data generator.
-		
-		
 		double[][] extData = null;
 		for (int r = 1; r <= numRuns; r++) {
+			
+			/* Without keeping dummy encoding
+			 * 
+			 * 
+			 */
+			//KMeans on gauss features with dummy encoding (for r > 1) from DBSCAN
+			kmeans = runner.runKMeans(r == 1 ? runner.dataGauss : runner.getExtData(runner.dataGauss, dbscan.getDummy()));
+			saveClusteringToFile(workDir + "/run_" + (r++) + ".csv", kmeans.getClustering());
+			
+			//DBSCAN on density features with dummy encoding from KMeans
+			int minPts = (2 * runner.numDimensions + kmeans.getClustering().getAllClusters().size() - 1);
+			System.out.println("Using MinPts = " + minPts);
+			//dbscan = runner.runSingleDBSCAN(runner.getExtData(runner.dataDensity, kmeans.getDummy()), minPts, 2.15);
+			dbscan = runner.runMultipleDBSCAN(runner.getExtData(runner.dataDensity, kmeans.getDummy()), 0.01, 0.01, minPts);
+			saveClusteringToFile(workDir + "/run_" + r + ".csv", dbscan.getClustering());
 			
 			
 			/*
@@ -153,24 +173,8 @@ public class IntegratedRunner {
 			dbscan = runner.runMultipleDBSCAN(extData, 0.01, 0.01, 2 * extData[0].length - 1);
 			saveClusteringToFile(workDir + "/run_" + r + ".csv", dbscan.getClustering());
 			*/
-			
-			
-			/* Without keeping dummy encoding
-			 * 
-			 * 
-			 */
-			//KMeans on gauss features with dummy encoding (for r > 1) from DBSCAN
-			kmeans = runner.runKMeans(r == 1 ? runner.dataGauss : runner.getExtData(runner.dataGauss, dbscan.getDummy()));
-			saveClusteringToFile(workDir + "/run_" + (r++) + ".csv", kmeans.getClustering());
-			
-			//DBSCAN on density features with dummy encoding from KMeans
-			int minPts = (2 * runner.numDimensions + kmeans.getClustering().getAllClusters().size() - 1);
-			System.out.println("Using MinPts = " + minPts);
-			//dbscan = runner.runSingleDBSCAN(runner.getExtData(runner.dataDensity, kmeans.getDummy()), minPts, 2.15);
-			dbscan = runner.runMultipleDBSCAN(runner.getExtData(runner.dataDensity, kmeans.getDummy()), 0.01, 0.01, minPts);
-			saveClusteringToFile(workDir + "/run_" + r + ".csv", dbscan.getClustering());
-			
 		}
+
 		
 		System.out.println("\nFinished.");
 	}
@@ -437,4 +441,59 @@ public class IntegratedRunner {
 		return extData;
 	}
 	
+	private static void plotKMeansClustering(Clustering<KMeansModel> clustering, double[][] plotData, DBIDRange ids, String filename) {
+		
+		XYSeriesCollection collection = new XYSeriesCollection();
+		for (int i = 0; i < clustering.getAllClusters().size(); i++) {
+			Cluster<KMeansModel> cluster = clustering.getAllClusters().get(i);
+			XYSeries series = new XYSeries(i);
+			for (DBIDIter it = cluster.getIDs().iter(); it.valid(); it.advance()) {
+				int objectID = ids.getOffset(it);
+				double[] row = plotData[objectID];
+				series.add(row[0], row[1]);
+			}
+			collection.addSeries(series);
+		}
+		
+		JFreeChart chartDensity = ChartFactory.createScatterPlot("", "", "", collection, 
+				PlotOrientation.VERTICAL, false, false, false);
+		
+		try {
+			ChartUtilities.saveChartAsJPEG(new File(filename), chartDensity, 660, 420);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		ChartFrame frame = new ChartFrame(filename, chartDensity);
+		frame.pack();
+		frame.setVisible(true);
+	}
+	
+	private static void plotDBSCANClustering(Clustering<Model> clustering, double[][] plotData, DBIDRange ids, String filename) {
+		
+		XYSeriesCollection collection = new XYSeriesCollection();
+		for (int i = 0; i < clustering.getAllClusters().size(); i++) {
+			Cluster<Model> cluster = clustering.getAllClusters().get(i);
+			XYSeries series = new XYSeries(i);
+			for (DBIDIter it = cluster.getIDs().iter(); it.valid(); it.advance()) {
+				int objectID = ids.getOffset(it);
+				double[] row = plotData[objectID];
+				series.add(row[0], row[1]);
+			}
+			collection.addSeries(series);
+		}
+		
+		JFreeChart chartDensity = ChartFactory.createScatterPlot("", "", "", collection, 
+				PlotOrientation.VERTICAL, false, false, false);
+		
+		try {
+			ChartUtilities.saveChartAsJPEG(new File(filename), chartDensity, 660, 420);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		ChartFrame frame = new ChartFrame(filename, chartDensity);
+		frame.pack();
+		frame.setVisible(true);
+	}
 }

@@ -42,7 +42,7 @@ public class DataGenerator2D {
 	/**
 	 * Number of generated points per cluster. 
 	 */
-	private static int numPointsCluster = 1000;
+	private static int numPointsCluster = 3000;
 	
 	/**
 	 * Working directory
@@ -65,15 +65,17 @@ public class DataGenerator2D {
 		Gaussian2DCluster g1 = new Gaussian2DCluster(numPointsCluster, mean1, dev1, rand);
 		gaussData.addAll(g1.getPoints());
 		
-		double[] mean2 = {100, 50};
-		double dev2 = 10;
+		double[] mean2 = {200, 200};
+		double dev2 = 50;
 		Gaussian2DCluster g2 = new Gaussian2DCluster(numPointsCluster, mean2, dev2, rand);
 		gaussData.addAll(g2.getPoints());
 		
-		double[] mean3 = {-50, 0};
-		double dev3 = 50;
+		double[] mean3 = {-200, 200};
+		double dev3 = 75;
 		Gaussian2DCluster g3 = new Gaussian2DCluster(numPointsCluster, mean3, dev3, rand);
 		gaussData.addAll(g3.getPoints());
+		
+		
 		
 		//Generate density clusters
 		System.out.println("Generate density clusters ...");
@@ -99,13 +101,9 @@ public class DataGenerator2D {
 		saveTrueClusteringToFile(dataPoints);
 		
 		//Plotting
-		try {
-			plotGaussianClusters(dataPoints, workDir + "/gauss.jpeg");
-			plotDensityClusters(dataPoints, workDir + "/density.jpeg");
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		plotGaussianClusters(dataPoints, workDir + "/true_gauss.jpeg");
+		plotDensityClusters(dataPoints, workDir + "/true_density.jpeg");
+		
 		
 		System.out.println("Finished.");
 	}
@@ -189,38 +187,34 @@ public class DataGenerator2D {
 		}
 	}
 	
-	/**
-	 * Generates and displays scatter plots for the gaussian clusters.
-	 * @param mergedDataPoints The full set of generated data points with point and cluster ids.
-	 */
-	private static void plotGaussianClusters(List<DataPoint> mergedDataPoints, String filename) throws Exception {
+	private static void plotGaussianClusters(List<DataPoint> dataPoints, String filename) {
 		
 		System.out.println("Plotting gaussian clusters ...");
 		
 		XYSeriesCollection datasetGauss = new XYSeriesCollection();
 		for (int i = 1; i <= numClusters; i++) {
 			XYSeries series = new XYSeries("Cluster #" + i);
-				for (DataPoint dataPoint : mergedDataPoints)
+				for (DataPoint dataPoint : dataPoints)
 					if (dataPoint.getClusterLabel().equals("c" + i))
 						series.add(dataPoint.getGaussFeatures()[0], dataPoint.getGaussFeatures()[1]);
 				datasetGauss.addSeries(series);
 		}
 		
-		JFreeChart chartGauss = ChartFactory.createScatterPlot("Gauss clusters", "x1", "x2", datasetGauss, 
+		JFreeChart chartGauss = ChartFactory.createScatterPlot("", "", "", datasetGauss, 
 				PlotOrientation.VERTICAL, false, false, false);
 		
-		ChartUtilities.saveChartAsJPEG(new File(filename), chartGauss, 660, 420);
+		try {
+			ChartUtilities.saveChartAsJPEG(new File(filename), chartGauss, 660, 420);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		
 		ChartFrame frame = new ChartFrame(filename, chartGauss);
 		frame.pack();
 		frame.setVisible(true);
 	}
 	
-	/**
-	 * Generates and displays scatter plots for the density clusters.
-	 * @param mergedDataPoints The full set of generated data points with point and cluster ids.
-	 */
-	private static void plotDensityClusters(List<DataPoint> mergedDataPoints, String filename) throws Exception {
+	private static void plotDensityClusters(List<DataPoint> mergedDataPoints, String filename) {
 		
 		System.out.println("Plotting density clusters ...");
 		
@@ -233,10 +227,14 @@ public class DataGenerator2D {
 				datasetDensity.addSeries(series);
 		}
 		
-		JFreeChart chartDensity = ChartFactory.createScatterPlot("Density clusters", "x1", "x2", datasetDensity, 
+		JFreeChart chartDensity = ChartFactory.createScatterPlot("", "", "", datasetDensity, 
 				PlotOrientation.VERTICAL, false, false, false);
 		
-		ChartUtilities.saveChartAsJPEG(new File(filename), chartDensity, 660, 420);
+		try {
+			ChartUtilities.saveChartAsJPEG(new File(filename), chartDensity, 660, 420);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		
 		ChartFrame frame = new ChartFrame(filename, chartDensity);
 		frame.pack();

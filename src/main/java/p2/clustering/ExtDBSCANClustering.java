@@ -14,10 +14,12 @@ public class ExtDBSCANClustering {
 	
 	private Clustering<Model> clustering;
 	private double[][] dummy;
+	private DBIDRange ids;
 	
 	public ExtDBSCANClustering(Clustering<Model> clustering, double[][] dummy, DBIDRange ids) {
 		this.clustering = clustering;
 		this.dummy = dummy;
+		this.ids = ids;
 		
 		//Log clustering
 		StringBuilder log = new StringBuilder();
@@ -62,7 +64,8 @@ public class ExtDBSCANClustering {
 		return dummy;
 	}
 
-
-	
+	public DBIDRange getIds() {
+		return ids;
+	}
 	
 }

@@ -1,27 +1,34 @@
 package p2.clustering;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import de.lmu.ifi.dbs.elki.data.Cluster;
 import de.lmu.ifi.dbs.elki.data.Clustering;
 import de.lmu.ifi.dbs.elki.data.model.KMeansModel;
+import de.lmu.ifi.dbs.elki.database.ids.DBIDIter;
 import de.lmu.ifi.dbs.elki.database.ids.DBIDRange;
 
 public class ExtKMeansClustering {
 	
 	private Clustering<KMeansModel> clustering;
 	private double[][] dummy;
+	private DBIDRange ids;
 	
 	public ExtKMeansClustering(Clustering<KMeansModel> clustering, double[][] dummy, DBIDRange ids) {
 		this.clustering = clustering;
 		this.dummy = dummy;
+		this.ids = ids;
 
 		//Log the clustering
 		StringBuilder log = new StringBuilder();
 		log.append("\nKMeans clustering:\n");
 		int clusterId = 1;
 		for (Cluster<KMeansModel> c : clustering.getAllClusters()) {
-			log.append("#" + clusterId + " [" + c.size() + "]");
+			log.append("#" + clusterId + " [" + c.size() + ", centroid " + c.getModel().getPrototype().toString() + "]");
 			
-			/*
+			
 			List<Integer> idList = new ArrayList<Integer>();
 			for (DBIDIter it = c.getIDs().iter(); it.valid(); it.advance())
 				idList.add(ids.getOffset(it));
@@ -29,7 +36,7 @@ public class ExtKMeansClustering {
 			Collections.sort(idList);
 			for (Integer id : idList)
 				log.append(" " + id);
-			*/
+			
 			
 			log.append("\n");
 			++clusterId;
@@ -57,6 +64,8 @@ public class ExtKMeansClustering {
 		return dummy;
 	}
 
-
+	public DBIDRange getIds() {
+		return ids;
+	}
 	
 }
