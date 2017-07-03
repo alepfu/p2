@@ -76,7 +76,6 @@ public class DataGenerator2D {
 		gaussData.addAll(g3.getPoints());
 		
 		
-		
 		//Generate density clusters
 		System.out.println("Generate density clusters ...");
 		List<double[]> densityData = new ArrayList<double[]>();
