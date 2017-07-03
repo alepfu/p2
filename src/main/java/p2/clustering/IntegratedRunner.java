@@ -88,13 +88,13 @@ public class IntegratedRunner {
 		IntegratedRunner runner = new IntegratedRunner(workDir + "/data.csv");
 		
 		//Normalization 			
-		StatisticsUtil statUtil = new StatisticsUtil();			//TODO Move normalization to data generator.
+		/*StatisticsUtil statUtil = new StatisticsUtil();			//TODO Move normalization to data generator.
 		System.out.println("SumVarGauss = " + statUtil.calcSumVar(runner.dataGauss, runner.dataGauss[0].length, runner.dataGauss.length));
 		System.out.println("SumVarDensity = " + statUtil.calcSumVar(runner.dataDensity, runner.dataDensity[0].length, runner.dataDensity.length));
 		System.out.println("Do normalization ...");
 		runner.normalizeDensityFeatures();
 		System.out.println("SumVarGauss = " + statUtil.calcSumVar(runner.dataGauss, runner.dataGauss[0].length, runner.dataGauss.length));
-		System.out.println("SumVarDensity = " + statUtil.calcSumVar(runner.dataDensity, runner.dataDensity[0].length, runner.dataDensity.length));
+		System.out.println("SumVarDensity = " + statUtil.calcSumVar(runner.dataDensity, runner.dataDensity[0].length, runner.dataDensity.length));*/
 		
 		
 		/**
@@ -138,11 +138,7 @@ public class IntegratedRunner {
 		
 		double[][] extData = null;
 		for (int r = 1; r <= numRuns; r++) {
-			
-			/* Without keeping dummy encoding
-			 * 
-			 * 
-			 */
+	
 			//KMeans on gauss features with dummy encoding (for r > 1) from DBSCAN
 			kmeans = runner.runKMeans(r == 1 ? runner.dataGauss : runner.getExtData(runner.dataGauss, dbscan.getDummy()));
 			saveClusteringToFile(workDir + "/run_" + (r++) + ".csv", kmeans.getClustering());
@@ -150,29 +146,9 @@ public class IntegratedRunner {
 			//DBSCAN on density features with dummy encoding from KMeans
 			int minPts = (2 * runner.numDimensions + kmeans.getClustering().getAllClusters().size() - 1);
 			System.out.println("Using MinPts = " + minPts);
-			//dbscan = runner.runSingleDBSCAN(runner.getExtData(runner.dataDensity, kmeans.getDummy()), minPts, 2.15);
-			dbscan = runner.runMultipleDBSCAN(runner.getExtData(runner.dataDensity, kmeans.getDummy()), 0.01, 0.01, minPts);
+			dbscan = runner.runMultipleDBSCAN(runner.getExtData(runner.dataDensity, kmeans.getDummy()), 0.1, 0.1, minPts);
 			saveClusteringToFile(workDir + "/run_" + r + ".csv", dbscan.getClustering());
 			
-			
-			/*
-			 * With keeping dummy enchoding (growing dimensionality from run to run)
-			 * 
-			 *
-			//KMeans on gauss features with dummy encoding (for r > 1) from DBSCAN			
-			if(r == 1)
-				extData = runner.dataGauss;
-			else
-				extData = runner.getExtData(extData, dbscan.getDummy());
-			kmeans = runner.runKMeans(extData);
-			saveClusteringToFile(workDir + "/run_" + (r++) + ".csv", kmeans.getClustering());
-			
-			//DBSCAN on density features with dummy encoding from KMeans
-			extData = runner.getExtData(extData, kmeans.getDummy());
-			System.out.println("Using MinPts = " + (2 * extData[0].length - 1));
-			dbscan = runner.runMultipleDBSCAN(extData, 0.01, 0.01, 2 * extData[0].length - 1);
-			saveClusteringToFile(workDir + "/run_" + r + ".csv", dbscan.getClustering());
-			*/
 		}
 
 		

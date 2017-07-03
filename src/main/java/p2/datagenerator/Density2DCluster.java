@@ -33,15 +33,16 @@ public class Density2DCluster {
 		this.position = position;
 		
 		switch (type) {
-		case TYPE_ARC_UP:
-			pointsArcUp();
-			break;
-		case TYPE_ARC_DOWN:
-			pointsArcDown();
-			break;
-		case TYPE_CIRCLE:
-			pointsCircle();
-			break;
+		
+			case TYPE_ARC_UP:
+				pointsArcUp();
+				break;
+			case TYPE_ARC_DOWN:
+				pointsArcDown();
+				break;
+			case TYPE_CIRCLE:
+				pointsCircle();
+				break;
 		}
 	}
 	
