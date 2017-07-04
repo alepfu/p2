@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -72,30 +71,37 @@ public class DataGenerator2D {
 		gaussData.addAll(g2.getPoints());
 		
 		
-		//Generate density clusters
+		//Generate density clusters with low density regions
 		System.out.println("Generate density clusters ...");
 		List<double[]> densityData = new ArrayList<double[]>();
 		
 		double[] dpos1 = {0, 0};		
-		Density2DCluster d1 = new Density2DCluster(numPointsCluster, Density2DCluster.TYPE_ARC_UP, dpos1, rand);
+		Density2DCluster d1 = new Density2DCluster(numPointsCluster, Density2DCluster.TYPE_ARC_UP, dpos1, rand, true);
 		densityData.addAll(d1.getPoints());
 		
 		double[] dpos2 = {100, 95.08};
-		Density2DCluster d2 = new Density2DCluster(numPointsCluster, Density2DCluster.TYPE_ARC_DOWN, dpos2, rand);
+		Density2DCluster d2 = new Density2DCluster(numPointsCluster, Density2DCluster.TYPE_ARC_DOWN, dpos2, rand, true);
 		densityData.addAll(d2.getPoints());
 		
 		
+		//Get low density ids
+		List<Integer> lowIds1 = d1.getLowIds();
+		List<Integer> lowIds2 = new ArrayList<Integer>();
+		for (Integer id2 : d2.getLowIds())
+			lowIds2.add(id2 + numPointsCluster);
+		
+			
 		//Get good/bad points from Gauss clusters
-		List<Integer> goodIdsGauss = getGoodIdsGauss(mean1, mean2, g1, g2);
-		List<Integer> badIdsGauss = getBadIdsGauss(mean1, mean2, dev1, dev2, g1, g2);
-	
+		List<Integer> goodIdsGauss1 = getGoodIdsGauss(mean1, g1, 0);
+		List<Integer> goodIdsGauss2 = getGoodIdsGauss(mean2, g2, numPointsCluster);
+		List<List<Integer>> twoLists = getBadIdsGauss(mean1, mean2, dev1, dev2, g1, g2);
+		List<Integer> badIdsGauss1 = twoLists.get(0);
+		List<Integer> badIdsGauss2 = twoLists.get(1);		
 		
-		
- 				
-		
-		
+				
 		//Merge data points together
-		List<DataPoint> dataPoints = getDataPoints(gaussData, densityData);
+		//List<DataPoint> dataPoints = getDataPoints(gaussData, densityData);
+		List<DataPoint> dataPoints = getDataPointsAssigned(gaussData, densityData, goodIdsGauss1, goodIdsGauss2, badIdsGauss1, badIdsGauss2, lowIds1, lowIds2);  //TOdO
 		
 		//Export data points and true clustering
 		saveDataPointsToFile(dataPoints);
@@ -103,9 +109,9 @@ public class DataGenerator2D {
 		
 		//Plotting
 		plotGaussianClusters(dataPoints, workDir + "/true_gauss.jpeg");
-		plotGaussianClustersGoodBad(dataPoints, workDir + "/badgood_gauss.jpeg", goodIdsGauss, badIdsGauss);
+		plotGaussianClustersGoodBad(dataPoints, workDir + "/badgood_gauss.jpeg", goodIdsGauss1, goodIdsGauss2, badIdsGauss1, badIdsGauss2);
 		plotDensityClusters(dataPoints, workDir + "/true_density.jpeg");
-		
+		plotDensityClustersLow(dataPoints, workDir + "/low_density.jpeg", lowIds1, lowIds2); //TOdO
 		
 		System.out.println("Finished.");
 	}
@@ -116,7 +122,7 @@ public class DataGenerator2D {
 	 * @param densityDataPoints
 	 * @return List of MergedDataPoint
 	 */
-	private static List<DataPoint> getDataPoints(List<double[]> gaussianDataPoints, List<double[]> densityDataPoints/*, List<Integer> nearMidIds*/) {
+	private static List<DataPoint> getDataPoints(List<double[]> gaussianDataPoints, List<double[]> densityDataPoints) {
 		
 		System.out.println("Merge and label data points ...");
 		
@@ -131,6 +137,27 @@ public class DataGenerator2D {
 			DataPoint p = new DataPoint(gaussianDataPoints.get(i), densityDataPoints.get(i), "c" + (clusterId + 1));
 			dataPoints.add(p);
 		}
+		
+		if (shuffleOutput)
+			Collections.shuffle(dataPoints);
+		
+		return dataPoints;
+	}
+	
+	private static List<DataPoint> getDataPointsAssigned(List<double[]> gaussianDataPoints, List<double[]> densityDataPoints, List<Integer> goodIdsGauss1, List<Integer> goodIdsGauss2, List<Integer> badIdsGauss1, List<Integer> badIdsGauss2, List<Integer> lowIdsDensity1, List<Integer> lowIdsDensity2) {
+		
+		System.out.println("Merge and label data points ...");
+		
+		List<DataPoint> dataPoints = new ArrayList<DataPoint>();
+		
+		
+		//For cluster 1, merge good Gauss with low Density
+		//For cluster 2, merge good Gauss with low Density
+	
+		//For cluster 1, merge bad Gauss with high Density
+		//For cluster 2, merge bad Gauss with high Density
+		
+		
 		
 		if (shuffleOutput)
 			Collections.shuffle(dataPoints);
@@ -189,14 +216,16 @@ public class DataGenerator2D {
 		}
 	}
 	
-	private static void plotGaussianClustersGoodBad(List<DataPoint> dataPoints, String filename, List<Integer> goodIds, List<Integer> badIds) {
+	private static void plotGaussianClustersGoodBad(List<DataPoint> dataPoints, String filename, List<Integer> goodIds1, List<Integer> goodIds2, List<Integer> badIds1, List<Integer> badIds2) {
 		
 		System.out.println("Plotting gaussian clusters ...");
 		
 		XYSeriesCollection datasetGauss = new XYSeriesCollection();
+		
 		XYSeries bad = new XYSeries("Bad");
 		XYSeries good = new XYSeries("Good");
-		List<XYSeries> seriesList = new ArrayList<XYSeries>();
+		datasetGauss.addSeries(good);
+		datasetGauss.addSeries(bad);
 		
 		for (int i = 1; i <= numClusters; i++) {
 			XYSeries series = new XYSeries("Cluster #" + i);
@@ -204,23 +233,17 @@ public class DataGenerator2D {
 			int id = 0;
 			for (DataPoint dataPoint : dataPoints) {
 				if (dataPoint.getClusterLabel().equals("c" + i))
-					if (goodIds.contains(id))
+					if (goodIds1.contains(id) || goodIds2.contains(id))
 						good.add(dataPoint.getGaussFeatures()[0], dataPoint.getGaussFeatures()[1]);
-					else if (badIds.contains(id))
+					else if (badIds1.contains(id) || badIds2.contains(id))
 						bad.add(dataPoint.getGaussFeatures()[0], dataPoint.getGaussFeatures()[1]);
 					else
 						series.add(dataPoint.getGaussFeatures()[0], dataPoint.getGaussFeatures()[1]);
 			
 				++id;
 			}
-			seriesList.add(series);
-		}
-		
-		datasetGauss.addSeries(good);
-		datasetGauss.addSeries(bad);
-		
-		for (XYSeries series : seriesList)
 			datasetGauss.addSeries(series);
+		}
 		
 		JFreeChart chartGauss = ChartFactory.createScatterPlot("", "", "", datasetGauss, 
 				PlotOrientation.VERTICAL, true, false, false);
@@ -263,6 +286,47 @@ public class DataGenerator2D {
 		frame.setVisible(true);
 	}
 	
+	private static void plotDensityClustersLow(List<DataPoint> mergedDataPoints, String filename, List<Integer> lowIds1, List<Integer> lowIds2) {
+		
+		System.out.println("Plotting density clusters ...");
+
+		XYSeriesCollection datasetDensity = new XYSeriesCollection();
+
+		XYSeries low = new XYSeries("Low");
+		datasetDensity.addSeries(low);
+		
+		for (int i = 1; i <= numClusters; i++) {
+			XYSeries series = new XYSeries("Cluster #" + i);
+			
+			int id = 0;
+			for (DataPoint dataPoint : mergedDataPoints) {
+				
+				if (dataPoint.getClusterLabel().equals("c" + i))
+					if (lowIds1.contains(id) || lowIds2.contains(id))
+						low.add(dataPoint.getDensityFeatures()[0], dataPoint.getDensityFeatures()[1]);
+					else
+						series.add(dataPoint.getDensityFeatures()[0], dataPoint.getDensityFeatures()[1]);
+				
+				++id;
+			}
+			
+			datasetDensity.addSeries(series);
+		}
+		
+		JFreeChart chartDensity = ChartFactory.createScatterPlot("", "", "", datasetDensity, 
+				PlotOrientation.VERTICAL, true, false, false);
+		
+		try {
+			ChartUtilities.saveChartAsJPEG(new File(filename), chartDensity, 660, 420);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		ChartFrame frame = new ChartFrame(filename, chartDensity);
+		frame.pack();
+		frame.setVisible(true);
+	}
+	
 	private static void plotDensityClusters(List<DataPoint> mergedDataPoints, String filename) {
 		
 		System.out.println("Plotting density clusters ...");
@@ -290,7 +354,7 @@ public class DataGenerator2D {
 		frame.setVisible(true);
 	}
 	
-	private static List<Integer> getBadIdsGauss(double[] mean1, double[] mean2, double dev1, double dev2, Gaussian2DCluster g1, Gaussian2DCluster g2) {
+	private static List<List<Integer>> getBadIdsGauss(double[] mean1, double[] mean2, double dev1, double dev2, Gaussian2DCluster g1, Gaussian2DCluster g2) {
 		
 		double distFactor1 = 2.2;
 		double distFactor2 = 0.8;
@@ -320,39 +384,25 @@ public class DataGenerator2D {
 			}
 		}
 		
-		List<Integer> allBadIds = new ArrayList<Integer>();
-		allBadIds.addAll(badIds1);
-		allBadIds.addAll(badIds2);
+		List<List<Integer>> twoLists = new ArrayList<List<Integer>>();
+		twoLists.add(badIds1);
+		twoLists.add(badIds2);
 		
-		return allBadIds;
+		return twoLists;
 	}
 
-	private static List<Integer> getGoodIdsGauss(double[] mean1, double[] mean2, Gaussian2DCluster g1, Gaussian2DCluster g2) {
+	private static List<Integer> getGoodIdsGauss(double[] mean, Gaussian2DCluster g, int idOffset) {
 		
 		double maxDist = 5.0;
 		
-		//Cluster 1
-		List<Integer> goodIds1 = new ArrayList<Integer>();
-		for(int i = 0; i < g1.getPoints().size(); i++) {
-			double[] p = g1.getPoints().get(i);
-			double distToMean1 = Math.sqrt(Math.pow(mean1[0] - p[0], 2) + Math.pow(mean1[1] - p[1], 2));
-			if (distToMean1 < maxDist)
-				goodIds1.add(i);
+		List<Integer> goodIds = new ArrayList<Integer>();
+		for(int i = 0; i < g.getPoints().size(); i++) {
+			double[] p = g.getPoints().get(i);
+			double distToMean = Math.sqrt(Math.pow(mean[0] - p[0], 2) + Math.pow(mean[1] - p[1], 2));
+			if (distToMean < maxDist)
+				goodIds.add(i + idOffset); 
 		}
 		
-		//Cluster 2
-		List<Integer> goodIds2 = new ArrayList<Integer>();
-		for(int i = 0; i < g2.getPoints().size(); i++) {
-			double[] p = g2.getPoints().get(i);
-			double distToMean2 = Math.sqrt(Math.pow(mean2[0] - p[0], 2) + Math.pow(mean2[1] - p[1], 2));
-			if (distToMean2 < maxDist)
-				goodIds2.add(i + numPointsCluster);  //needs shift, because of merging later
-		}
-		
-		List<Integer> allGoodIds = new ArrayList<Integer>();
-		allGoodIds.addAll(goodIds1);
-		allGoodIds.addAll(goodIds2);
-		
-		return allGoodIds;
+		return goodIds;
 	}
 }
