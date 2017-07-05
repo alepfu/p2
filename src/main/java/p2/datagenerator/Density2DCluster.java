@@ -27,6 +27,7 @@ public class Density2DCluster {
 	private boolean doLowDensityRegions;
 	
 	private List<Integer> lowIds;
+	private List<Integer> highIds;
 	
 	public Density2DCluster(int numPoints, String type, double[] position, Random rand, boolean doLowDensityRegions) {
 		
@@ -94,6 +95,7 @@ public class Density2DCluster {
 	private void pointsArcUpLow() {
 	
 		this.lowIds = new ArrayList<Integer>();
+		this.highIds = new ArrayList<Integer>();
 		
 		int numCorePoints = numPoints / FRACTION_CORE_POINTS_ARC;
 		
@@ -156,7 +158,8 @@ public class Density2DCluster {
 		//Set low density ids
 		for (int id = 0; id < this.points.size(); id++)
 			lowIds.add(id);
-			
+		
+		
 		
 		//Mid
 		List<double[]> coreMid = new ArrayList<double[]>();
@@ -181,6 +184,10 @@ public class Density2DCluster {
 		}
 		this.points.addAll(borderMid);
 		
+		
+		//Set high density ids
+		for (int id = lowIds.size(); id < this.points.size(); id++)
+			highIds.add(id);
 		
 		
 		//Move points to position
@@ -224,11 +231,10 @@ public class Density2DCluster {
 		}
 	}
 	
-//	corePoint[0] = 1 - Math.cos(l[i]) * SCALING_ARC; 
-//	corePoint[1] = 1 - Math.sin(l[i]) * SCALING_ARC;
 	private void pointsArcDownLow() {		
 		
 		this.lowIds = new ArrayList<Integer>();
+		this.highIds = new ArrayList<Integer>();
 		
 		int numCorePoints = numPoints / FRACTION_CORE_POINTS_ARC;
 		
@@ -317,6 +323,9 @@ public class Density2DCluster {
 		this.points.addAll(borderMid);
 		
 		
+		//Set high density ids
+		for (int id = lowIds.size(); id < this.points.size(); id++)
+			highIds.add(id);
 		
 		//Move points to position
 		for (double[] point : this.points) {
@@ -397,6 +406,8 @@ public class Density2DCluster {
 		return lowIds;
 	}  
 	
-	
+	public List<Integer> getHighIds() {
+		return highIds;
+	} 
 	
 }
