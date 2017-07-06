@@ -44,7 +44,7 @@ public class DataGenerator2D {
 	/**
 	 * Number of generated points per cluster. 
 	 */
-	private static int numPointsCluster = 3000;
+	private static int numPointsCluster = 5000;
 	
 	/**
 	 * Working directory
@@ -59,8 +59,8 @@ public class DataGenerator2D {
 		double[] mean1 = {0, 0};
 		double dev1 = 50;
 		Gaussian2DCluster g1 = new Gaussian2DCluster(numPointsCluster, mean1, dev1, rand);
-		double[] mean2 = {130, 130};
-		double dev2 = 50;
+		double[] mean2 = {100, 100};
+		double dev2 = 80;
 		Gaussian2DCluster g2 = new Gaussian2DCluster(numPointsCluster, mean2, dev2, rand);
 		
 		
@@ -68,7 +68,7 @@ public class DataGenerator2D {
 		System.out.println("Generate density clusters ...");
 		double[] dpos1 = {0, 0};		
 		Density2DCluster d1 = new Density2DCluster(numPointsCluster, Density2DCluster.TYPE_ARC_UP, dpos1, rand, true);
-		double[] dpos2 = {100, 95.08};
+		double[] dpos2 = {100, 95};
 		Density2DCluster d2 = new Density2DCluster(numPointsCluster, Density2DCluster.TYPE_ARC_DOWN, dpos2, rand, true);
 		
 		
@@ -382,7 +382,7 @@ public class DataGenerator2D {
 	
 	private static List<List<Integer>> getBadIdsGauss(double[] mean1, double[] mean2, double dev1, double dev2, Gaussian2DCluster g1, Gaussian2DCluster g2) {
 		
-		double distFactor1 = 2.2;
+		double distFactor1 = 1.2;		//TODO nice to have
 		double distFactor2 = 0.8;
 		
 		//Cluster 1
@@ -419,7 +419,7 @@ public class DataGenerator2D {
 
 	private static List<Integer> getGoodIdsGauss(double[] mean, Gaussian2DCluster g) {
 		
-		double maxDist = 5.0;  //TODO nice to have
+		double maxDist = 7.0;  //TODO nice to have
 		
 		List<Integer> goodIds = new ArrayList<Integer>();
 		for(int i = 0; i < g.getPoints().size(); i++) {

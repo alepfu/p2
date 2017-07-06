@@ -105,24 +105,25 @@ public class IntegratedRunner {
 		 * 
 		 */
 		//KMeans runs
-		ExtKMeansClustering kmeans1 = runner.runKMeans(runner.data);
-		saveClusteringToFile(workDir + "/kmeans_full.csv", kmeans1.getClustering());
-		ExtKMeansClustering kmeans2 = runner.runKMeans(runner.dataGauss);
-		saveClusteringToFile(workDir + "/kmeans_gauss.csv", kmeans2.getClustering());
-		plotKMeansClustering(kmeans2.getClustering(), runner.dataGauss, kmeans2.getIds(), workDir + "/kmeans_gauss.jpeg");
-		ExtKMeansClustering kmeans3 = runner.runKMeans(runner.dataDensity);
-		saveClusteringToFile(workDir + "/kmeans_density.csv", kmeans3.getClustering());
-		plotKMeansClustering(kmeans3.getClustering(), runner.dataDensity, kmeans3.getIds(), workDir + "/kmeans_density.jpeg");
+//		ExtKMeansClustering kmeans1 = runner.runKMeans(runner.data);
+//		saveClusteringToFile(workDir + "/kmeans_full.csv", kmeans1.getClustering());
+//		ExtKMeansClustering kmeans2 = runner.runKMeans(runner.dataGauss);
+//		saveClusteringToFile(workDir + "/kmeans_gauss.csv", kmeans2.getClustering());
+//		plotKMeansClustering(kmeans2.getClustering(), runner.dataGauss, kmeans2.getIds(), workDir + "/kmeans_gauss.jpeg");
+//		ExtKMeansClustering kmeans3 = runner.runKMeans(runner.dataDensity);
+//		saveClusteringToFile(workDir + "/kmeans_density.csv", kmeans3.getClustering());
+//		plotKMeansClustering(kmeans3.getClustering(), runner.dataDensity, kmeans3.getIds(), workDir + "/kmeans_density.jpeg");
 		
 		//DBSCAN runs
-		ExtDBSCANClustering dbscan1 = runner.runMultipleDBSCAN(runner.data, 40.0, 1.0, 5);
-		saveClusteringToFile(workDir + "/dbscan_full.csv", dbscan1.getClustering());
-		ExtDBSCANClustering dbscan2 = runner.runSingleDBSCAN(runner.dataGauss, 5, 2.0);
-		saveClusteringToFile(workDir + "/dbscan_gauss.csv", dbscan2.getClustering());
-		plotDBSCANClustering(dbscan2.getClustering(), runner.dataGauss, dbscan2.getIds(), workDir + "/dbscan_gauss.jpeg");
-		ExtDBSCANClustering dbscan3 = runner.runMultipleDBSCAN(runner.dataDensity, 0.05, 0.1, 5);
-		saveClusteringToFile(workDir + "/dbscan_density.csv", dbscan3.getClustering());
-		plotDBSCANClustering(dbscan3.getClustering(), runner.dataDensity, dbscan3.getIds(), workDir + "/dbscan_density.jpeg");
+//		ExtDBSCANClustering dbscan1 = runner.runMultipleDBSCAN(runner.data, 40.0, 1.0, 5);
+//		saveClusteringToFile(workDir + "/dbscan_full.csv", dbscan1.getClustering());
+//		ExtDBSCANClustering dbscan2 = runner.runSingleDBSCAN(runner.dataGauss, 5, 2.0);
+//		saveClusteringToFile(workDir + "/dbscan_gauss.csv", dbscan2.getClustering());
+//		plotDBSCANClustering(dbscan2.getClustering(), runner.dataGauss, dbscan2.getIds(), workDir + "/dbscan_gauss.jpeg");
+		
+//		ExtDBSCANClustering dbscan3 = runner.runSingleDBSCAN(runner.dataDensity, 5, 2.5);
+//		saveClusteringToFile(workDir + "/dbscan_density.csv", dbscan3.getClustering());
+//		plotDBSCANClustering(dbscan3.getClustering(), runner.dataDensity, dbscan3.getIds(), workDir + "/dbscan_density.jpeg");
 		
 		
 		/**
@@ -132,7 +133,7 @@ public class IntegratedRunner {
 		 * =====================================
 		 * 
 		 */
-		int numRuns = 6;
+		int numRuns = 8;
 		ExtKMeansClustering kmeans = null;
 		ExtDBSCANClustering dbscan = null;
 		
@@ -144,9 +145,8 @@ public class IntegratedRunner {
 			saveClusteringToFile(workDir + "/run_" + (r++) + ".csv", kmeans.getClustering());
 			
 			//DBSCAN on density features with dummy encoding from KMeans
-			int minPts = (2 * runner.numDimensions + kmeans.getClustering().getAllClusters().size() - 1);
-			System.out.println("Using MinPts = " + minPts);
-			dbscan = runner.runMultipleDBSCAN(runner.getExtData(runner.dataDensity, kmeans.getDummy()), 0.1, 0.1, minPts);
+			//dbscan = runner.runMultipleDBSCAN(runner.getExtData(runner.dataDensity, kmeans.getDummy()), 7, 1, minPts);
+			dbscan = runner.runSingleDBSCAN(runner.dataDensity, 5, 1.0);
 			saveClusteringToFile(workDir + "/run_" + r + ".csv", dbscan.getClustering());
 			
 		}
