@@ -9,7 +9,7 @@ public class DataLoaderUtil {
 	
 	private String file;
 	
-	private int numDimensions;
+	private int numDimPerType;
 	private int numPointsCluster;
 	private int numClusters;
 	private int numPoints;
@@ -38,7 +38,7 @@ public class DataLoaderUtil {
 
 			br.close();
 			
-			numDimensions = Integer.parseInt(header.get("numDimensions"));
+			numDimPerType = Integer.parseInt(header.get("numDimPerType"));
 			numPointsCluster = Integer.parseInt(header.get("numPointsCluster"));
 			numClusters = Integer.parseInt(header.get("numClusters"));
 			numPoints = numClusters * numPointsCluster;
@@ -54,7 +54,7 @@ public class DataLoaderUtil {
 		if (data != null)
 			return data;
 		
-		data = new double[numPoints][numDimensions * 2];
+		data = new double[numPoints][numDimPerType * 2];
 		
 		try {
 			String line = "";
@@ -64,7 +64,7 @@ public class DataLoaderUtil {
 			
 				if (!line.startsWith("#")) {
 					String[] split = line.split(" ");
-					for (int j = 0; j < (numDimensions * 2); j++)
+					for (int j = 0; j < (numDimPerType * 2); j++)
 						data[id][j] = Double.parseDouble(split[j]);
 					++id;
 				}
@@ -85,9 +85,9 @@ public class DataLoaderUtil {
 			data = this.loadData();
 		
 		//Copy gaussian data points to double[][] array
-		double[][] gaussianData = new double[data.length][numDimensions];
+		double[][] gaussianData = new double[data.length][numDimPerType];
 		for (int i = 0; i < data.length; i++)
-			for (int j = 0; j < numDimensions; j++)
+			for (int j = 0; j < numDimPerType; j++)
 				gaussianData[i][j] = data[i][j];
 		
 		return gaussianData; 
@@ -99,16 +99,16 @@ public class DataLoaderUtil {
 			data = this.loadData();
 		
 		//Copy density data points to double[][] array
-		double[][] densityData = new double[data.length][numDimensions];
+		double[][] densityData = new double[data.length][numDimPerType];
 		for (int i = 0; i < data.length; i++)
-			for (int j = 0; j < numDimensions; j++)
-				densityData[i][j] = data[i][j +  numDimensions];
+			for (int j = 0; j < numDimPerType; j++)
+				densityData[i][j] = data[i][j +  numDimPerType];
 		
 		return densityData; 
 	}
 
-	public int getNumDimensions() {
-		return numDimensions;
+	public int getNumDimPerType() {
+		return numDimPerType;
 	}
 
 	public int getNumPointsCluster() {

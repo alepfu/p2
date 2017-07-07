@@ -1,4 +1,4 @@
-package p2.old;
+package p2.util;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 

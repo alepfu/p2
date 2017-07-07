@@ -3,7 +3,9 @@ package p2.clustering;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.text.NumberFormat;
+import java.text.spi.NumberFormatProvider;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
@@ -36,15 +38,15 @@ import de.lmu.ifi.dbs.elki.index.tree.spatial.rstarvariants.rstar.RStarTreeFacto
 import de.lmu.ifi.dbs.elki.math.geometry.XYCurve;
 import de.lmu.ifi.dbs.elki.utilities.ClassGenericsUtil;
 import de.lmu.ifi.dbs.elki.utilities.optionhandling.parameterization.ListParameterization;
-import p2.old.StatisticsUtil;
 import p2.util.DataLoaderUtil;
+import p2.util.StatisticsUtil;
 
 public class IntegratedRunner {
 
 	/**
 	 * Number of dimensions for each cluster type.
 	 */
-	private int numDimensions;
+	private int numDimPerType;
 	
 	/**
 	 * Number of clusters.
@@ -86,16 +88,6 @@ public class IntegratedRunner {
 		
 		IntegratedRunner runner = new IntegratedRunner(workDir + "/data.csv");
 		
-		//Normalization 			
-		/*StatisticsUtil statUtil = new StatisticsUtil();			//TODO Move normalization to data generator.
-		System.out.println("SumVarGauss = " + statUtil.calcSumVar(runner.dataGauss, runner.dataGauss[0].length, runner.dataGauss.length));
-		System.out.println("SumVarDensity = " + statUtil.calcSumVar(runner.dataDensity, runner.dataDensity[0].length, runner.dataDensity.length));
-		System.out.println("Do normalization ...");
-		runner.normalizeDensityFeatures();
-		System.out.println("SumVarGauss = " + statUtil.calcSumVar(runner.dataGauss, runner.dataGauss[0].length, runner.dataGauss.length));
-		System.out.println("SumVarDensity = " + statUtil.calcSumVar(runner.dataDensity, runner.dataDensity[0].length, runner.dataDensity.length));*/
-		
-		
 		/**
 		 * 
 		 * 
@@ -104,7 +96,9 @@ public class IntegratedRunner {
 		 * 
 		 */
 		//KMeans runs
-//		ExtKMeansClustering kmeans1 = runner.runKMeans(runner.data);
+		runner.runKMeans(runner.data, "kmeansfull");
+		runner.runDBSCAN(runner.data, 10, 60, true, "dbscanfull");
+		
 //		saveClusteringToFile(workDir + "/kmeans_full.csv", kmeans1.getClustering());
 //		ExtKMeansClustering kmeans2 = runner.runKMeans(runner.dataGauss);
 //		saveClusteringToFile(workDir + "/kmeans_gauss.csv", kmeans2.getClustering());
@@ -121,17 +115,38 @@ public class IntegratedRunner {
 //		plotDBSCANClustering(dbscan2.getClustering(), runner.dataGauss, dbscan2.getIds(), workDir + "/dbscan_gauss.jpeg");
 //		ExtDBSCANClustering dbscan3 = runner.runSingleDBSCAN(runner.dataDensity, 10, 1.75);
 //		saveClusteringToFile(workDir + "/dbscan_density.csv", dbscan3.getClustering());
-		//plotDBSCANClustering(dbscan3.getClustering(), runner.dataDensity, dbscan3.getIds(), workDir + "/dbscan_density.jpeg");
+//		plotDBSCANClustering(dbscan3.getClustering(), runner.dataDensity, dbscan3.getIds(), workDir + "/dbscan_density.jpeg");
 		
 		
 		/**
 		 * 
 		 * 
-		 * Running DBSCAN and KMeans alternately in a loop
-		 * ===============================================
+		 * Running DBSCAN and KMeans alternately
+		 * =====================================
 		 * 
 		 */
-		int numRuns = 8;
+		int minPts = 4;
+		double epsilon = 7.5;
+		boolean doEpsilonEstimation = false;
+		
+		ExtKMeansClustering kmeans1 = runner.runKMeans(runner.dataGauss, "kmeans1");
+		
+		ExtDBSCANClustering dbscan1 = runner.runDBSCAN(runner.getExtData(runner.dataDensity, kmeans1.getDummy()), minPts, epsilon, doEpsilonEstimation, "dbscan1");
+		
+		ExtKMeansClustering kmeans2 = runner.runKMeans(runner.getExtData(runner.dataGauss, dbscan1.getDummy()), "kmeans2");
+		
+		ExtDBSCANClustering dbscan2 = runner.runDBSCAN(runner.getExtData(runner.dataDensity, kmeans2.getDummy()), minPts, epsilon, doEpsilonEstimation, "dbscan2");
+		
+		ExtKMeansClustering kmeans3 = runner.runKMeans(runner.getExtData(runner.dataGauss, dbscan2.getDummy()), "kmeans3");
+		
+		ExtDBSCANClustering dbscan3 = runner.runDBSCAN(runner.getExtData(runner.dataDensity, kmeans3.getDummy()), minPts, epsilon, doEpsilonEstimation, "dbscan3");
+		
+		
+		plotKMeansClustering(kmeans3.getClustering(), runner.dataGauss, kmeans3.getIds(), workDir + "/kmeans_final.jpeg");
+		plotDBSCANClustering(dbscan3.getClustering(), runner.dataDensity, dbscan3.getIds(), workDir + "/dbscan_final.jpeg");
+		
+		
+		/*int numRuns = 8;
 
 		ExtKMeansClustering kmeans = null;
 		ExtDBSCANClustering dbscan = null;
@@ -149,10 +164,9 @@ public class IntegratedRunner {
 			dbscan = runner.runSingleDBSCAN(runner.getExtData(runner.dataDensity, kmeans.getDummy()), minPts, 16, doEpsilonEstimation);
 			saveClusteringToFile(workDir + "/run_" + r + ".csv", dbscan.getClustering());
 			
-		}
+		}*/
 		
-//		plotKMeansClustering(kmeans.getClustering(), runner.dataGauss, kmeans.getIds(), workDir + "/kmeans_final.jpeg");
-//		plotDBSCANClustering(dbscan.getClustering(), runner.dataDensity, dbscan.getIds(), workDir + "/dbscan_final.jpeg");
+
 
 		
 		System.out.println("\nFinished.");
@@ -167,7 +181,7 @@ public class IntegratedRunner {
 
 		System.out.println("Loading data ...");
 		DataLoaderUtil dataUtil = new DataLoaderUtil(file);	
-		numDimensions = dataUtil.getNumDimensions();
+		numDimPerType = dataUtil.getNumDimPerType();
 		numClusters = dataUtil.getNumClusters();
 		numPointsCluster = dataUtil.getNumPointsCluster();
 		numPoints = numClusters * numPointsCluster;
@@ -176,33 +190,22 @@ public class IntegratedRunner {
 		dataDensity = dataUtil.getDensityData();
 	}
 	
-	private void normalizeDensityFeatures() {
-		
-		StatisticsUtil statUtil = new StatisticsUtil();
-		double sumVarGauss = statUtil.calcSumVar(dataGauss, dataGauss[0].length, dataGauss.length);
-		double sumVarDensity = statUtil.calcSumVar(dataDensity, dataDensity[0].length, dataDensity.length);
-		double factor = Math.sqrt(sumVarGauss / sumVarDensity);
-		for (int row = 0; row < dataDensity.length; row++)
-			for (int col = 0; col < dataDensity[0].length; col++)
-				dataDensity[row][col] *= factor;
-	}
-	
 	/**
 	 * Runs KMeans clustering using data extended by DBSCAN cluster labels in dummy encoding.
 	 * @return A clustering result with additional dummy encoding.
 	 */
-	private ExtKMeansClustering runKMeans(double[][] data) {
+	private ExtKMeansClustering runKMeans(double[][] data, String iterLabel) {
 		
 		System.out.println("Running KMeans ...");
 		
-		ArrayAdapterDatabaseConnection gaussDBConn = new ArrayAdapterDatabaseConnection(data);
-		ListParameterization gaussDBParams = new ListParameterization();
-		gaussDBParams.addParameter(AbstractDatabase.Parameterizer.DATABASE_CONNECTION_ID, gaussDBConn);
-		Database gaussDB = ClassGenericsUtil.parameterizeOrAbort(StaticArrayDatabase.class, gaussDBParams);
-		gaussDB.initialize();
+		ArrayAdapterDatabaseConnection conn = new ArrayAdapterDatabaseConnection(data);
+		ListParameterization dbParams = new ListParameterization();
+		dbParams.addParameter(AbstractDatabase.Parameterizer.DATABASE_CONNECTION_ID, conn);
+		Database db = ClassGenericsUtil.parameterizeOrAbort(StaticArrayDatabase.class, dbParams);
+		db.initialize();
 		
-		Relation<NumberVector> gausRel = gaussDB.getRelation(TypeUtil.NUMBER_VECTOR_FIELD);
-	    DBIDRange gaussIDs = (DBIDRange) gausRel.getDBIDs();
+		Relation<NumberVector> rel = db.getRelation(TypeUtil.NUMBER_VECTOR_FIELD);
+	    DBIDRange ids = (DBIDRange) rel.getDBIDs();
 		
 	    ListParameterization kmeansParams = new ListParameterization();
 		kmeansParams.addParameter(KMeansMacQueen.K_ID, numClusters);
@@ -210,18 +213,21 @@ public class IntegratedRunner {
 		
 		//Run KMeans
 		KMeansMacQueen<DoubleVector> kmeans = ClassGenericsUtil.parameterizeOrAbort(KMeansMacQueen.class, kmeansParams);
-		Clustering<KMeansModel> kmeansClustering = kmeans.run(gaussDB);
+		Clustering<KMeansModel> clu = kmeans.run(db);
 		
 		//Generate dummy encoding
-		double[][] kmeansDummy = new double[numPoints][numClusters];		
+		double[][] dummy = new double[numPoints][numClusters];		
 		int clusterID = 0;
-		for (Cluster<KMeansModel> c : kmeansClustering.getAllClusters()) {
+		for (Cluster<KMeansModel> c : clu.getAllClusters()) {
 			for (DBIDIter it = c.getIDs().iter(); it.valid(); it.advance())
-				kmeansDummy[gaussIDs.getOffset(it)][clusterID] = 1.0;
+				dummy[ids.getOffset(it)][clusterID] = 1.0;
 			++clusterID;
 		}
 		
-		return new ExtKMeansClustering(kmeansClustering, kmeansDummy, gaussIDs);
+		//Save clustering to file
+		saveClusteringToFile(workDir + "/" + iterLabel + ".csv", clu, ids);
+		
+		return new ExtKMeansClustering(clu, dummy, ids);
 	}
 	
 	/**
@@ -231,19 +237,19 @@ public class IntegratedRunner {
 	 * @param epsilon The epsilon parameter of the DBSCAN algorithm.
 	 * @return A clustering result with additional dummy encoding.
 	 */
-	private ExtDBSCANClustering runSingleDBSCAN(double[][] data, int minPts, double epsilon, boolean doEpsilonEstimation) {
+	private ExtDBSCANClustering runDBSCAN(double[][] data, int minPts, double epsilon, boolean doEpsilonEstimation, String iterLabel) {
 		
-		System.out.println("Running Single-DBSCAN ...");
+		System.out.println("Running DBSCAN ...");
 		
-		ArrayAdapterDatabaseConnection densityDBConn = new ArrayAdapterDatabaseConnection(data);
-		ListParameterization densityDBParams = new ListParameterization();
-		densityDBParams.addParameter(AbstractDatabase.Parameterizer.DATABASE_CONNECTION_ID, densityDBConn);
-		densityDBParams.addParameter(AbstractDatabase.Parameterizer.INDEX_ID, RStarTreeFactory.class);
-		Database densityDB = ClassGenericsUtil.parameterizeOrAbort(StaticArrayDatabase.class, densityDBParams);
-		densityDB.initialize();
+		ArrayAdapterDatabaseConnection conn = new ArrayAdapterDatabaseConnection(data);
+		ListParameterization dbParams = new ListParameterization();
+		dbParams.addParameter(AbstractDatabase.Parameterizer.DATABASE_CONNECTION_ID, conn);
+		dbParams.addParameter(AbstractDatabase.Parameterizer.INDEX_ID, RStarTreeFactory.class);
+		Database db = ClassGenericsUtil.parameterizeOrAbort(StaticArrayDatabase.class, dbParams);
+		db.initialize();
 		
-		Relation<DoubleVector> densityRel = densityDB.getRelation(TypeUtil.NUMBER_VECTOR_FIELD);
-	    DBIDRange densityIDs = (DBIDRange) densityRel.getDBIDs();
+		Relation<DoubleVector> rel = db.getRelation(TypeUtil.NUMBER_VECTOR_FIELD);
+	    DBIDRange ids = (DBIDRange) rel.getDBIDs();
 		
 		ListParameterization dbscanParams = new ListParameterization();
 		dbscanParams.addParameter(DBSCAN.Parameterizer.EPSILON_ID, epsilon);
@@ -252,98 +258,32 @@ public class IntegratedRunner {
 		
 		//Sample some KNN-distances for estimating a good epsilon
 		if (doEpsilonEstimation)
-			estimateDBSCANEpsilonParameter(minPts, densityDB, densityRel);
+			estimateDBSCANEpsilonParameter(minPts, db, rel);
 		
 		//Run DBSCAN
 		DBSCAN<DoubleVector> dbscan = ClassGenericsUtil.parameterizeOrAbort(DBSCAN.class, dbscanParams);
-		Clustering<Model> dbscanClustering = dbscan.run(densityDB);
+		Clustering<Model> clu = dbscan.run(db);
 		
 		//Strip 0-element clusters
 		Clustering<Model> stripped = new Clustering<Model>("DBSCAN Clustering", "dbscan-clustering");
-		for (Cluster<Model> c : dbscanClustering.getAllClusters())
+		for (Cluster<Model> c : clu.getAllClusters())
 			if (c.size() > 0)
 				stripped.addToplevelCluster(c);
-		dbscanClustering = stripped;
+		clu = stripped;
 		
 		//Generate dummy encoding
-		double[][] dbscanDummy = new double[numPoints][dbscanClustering.getAllClusters().size()];
+		double[][] dummy = new double[numPoints][clu.getAllClusters().size()];
 		int clusterID = 0;
-		for (Cluster<Model> c : dbscanClustering.getAllClusters()) {
+		for (Cluster<Model> c : clu.getAllClusters()) {
 			for (DBIDIter it = c.getIDs().iter(); it.valid(); it.advance()) 
-				dbscanDummy[densityIDs.getOffset(it)][clusterID] = 1.0;
+				dummy[ids.getOffset(it)][clusterID] = 1.0;
 			++clusterID;
 		}
 		
-		return new ExtDBSCANClustering(dbscanClustering, dbscanDummy, densityIDs);
-	}
-	
-	
-	/**
-	 * Runs DBSCAN multiple times until k clusters are found by increasing epsilon successivley.
-	 * Since we know k (the number of clusters) we do multiple runs of DBSCAN with increasing epsilon until k clusters are found.
-	 * @param data The data to process.
-	 * @param initEpsilon The initial value for the parameter epsilon of the DBCAN algorithm.
-	 * @param stepsize The stepsize epsilon is increased every iteration.
-	 * @return A clustering result with additional dummy encoding.
-	 */
-	private ExtDBSCANClustering runMultipleDBSCAN(double[][] data, double initEpsilon, double stepsize, int minPts) {
+		//Save clustering to file
+		saveClusteringToFile(workDir + "/" + iterLabel + ".csv", clu, ids);
 		
-		System.out.println("Running Multiple-DBSCAN ...");
-		
-		ArrayAdapterDatabaseConnection densityDBConn = new ArrayAdapterDatabaseConnection(data);
-		ListParameterization densityDBParams = new ListParameterization();
-		densityDBParams.addParameter(AbstractDatabase.Parameterizer.DATABASE_CONNECTION_ID, densityDBConn);
-		densityDBParams.addParameter(AbstractDatabase.Parameterizer.INDEX_ID, RStarTreeFactory.class);
-		Database densityDB = ClassGenericsUtil.parameterizeOrAbort(StaticArrayDatabase.class, densityDBParams);
-		densityDB.initialize();
-		
-		Relation<NumberVector> densityRel = densityDB.getRelation(TypeUtil.NUMBER_VECTOR_FIELD);
-	    DBIDRange densityIDs = (DBIDRange) densityRel.getDBIDs();
-		
-	    //Increase epsilon until DBSCAN finds k clusters. 
-		int numFoundClusters = 0;
-		double epsilon = initEpsilon;					
-		Clustering<Model> dbscanClustering;
-		do {
-			ListParameterization dbscanParams = new ListParameterization();
-			dbscanParams.addParameter(DBSCAN.Parameterizer.EPSILON_ID, epsilon);
-			dbscanParams.addParameter(DBSCAN.Parameterizer.MINPTS_ID, minPts);
-			dbscanParams.addParameter(DBSCAN.DISTANCE_FUNCTION_ID, EuclideanDistanceFunction.class);
-			
-			DBSCAN<DoubleVector> dbscan = ClassGenericsUtil.parameterizeOrAbort(DBSCAN.class, dbscanParams);
-			dbscanClustering = dbscan.run(densityDB);
-
-			epsilon += stepsize;
-			
-			//Don't account for 0-element clusters
-			numFoundClusters = 0;
-			for (Cluster<Model> c : dbscanClustering.getAllClusters())
-				if (c.size() > 0)	
-					++numFoundClusters;
-
-		} while (numFoundClusters != numClusters);
-
-		System.out.println("Final epsilon = " + (epsilon - stepsize));
-		
-		//Strip 0-element clusters
-		Clustering<Model> stripped = new Clustering<Model>("DBSCAN Clustering", "dbscan-clustering");
-		if (numFoundClusters != dbscanClustering.getAllClusters().size()) {
-			for (Cluster<Model> c : dbscanClustering.getAllClusters())
-				if (c.size() > 0)
-					stripped.addToplevelCluster(c);
-			dbscanClustering = stripped;
-		}
-		
-		//Generate dummy encoding
-		double[][] dbscanDummy = new double[numPoints][numFoundClusters];
-		int clusterID = 0;
-		for (Cluster<Model> c : dbscanClustering.getAllClusters()) {
-			for (DBIDIter it = c.getIDs().iter(); it.valid(); it.advance()) 
-				dbscanDummy[densityIDs.getOffset(it)][clusterID] = 1.0;
-			++clusterID;
-		}
-		
-		return new ExtDBSCANClustering(dbscanClustering, dbscanDummy, densityIDs);
+		return new ExtDBSCANClustering(clu, dummy, ids);
 	}
 	
 	/**
@@ -353,26 +293,28 @@ public class IntegratedRunner {
 	 * @param filename The file to write to.
 	 * @param clustering The clustering to export to the file.
 	 */
-	private static void saveClusteringToFile(String filename, Clustering<? extends Model> clustering) {
+	private void saveClusteringToFile(String filename, Clustering<? extends Model> clu, DBIDRange ids) {
 		
-		StringBuilder log = new StringBuilder();
-		
-		int clusterLabel = 1;
-		for (Cluster<? extends Model> cluster : clustering.getAllClusters()) {
-			for (int i = 0; i < cluster.getIDs().size(); i++)
-				log.append(clusterLabel + " ");
-			++clusterLabel;
+		int[] labels = new int[numPoints];
+
+		int cluId = 1;
+		for (Cluster<? extends Model> c : clu.getAllClusters()) { 
+			for (DBIDIter it = c.getIDs().iter(); it.valid(); it.advance())
+				labels[ids.getOffset(it)] = cluId;
+			++cluId;
 		}
+		StringBuilder sb = new StringBuilder();			
+		for (int l : labels)
+			sb.append(l + " ");
 		
 		try {
 			FileWriter writer = new FileWriter(new File(filename));
-			writer.write(log.toString());
+			writer.write(sb.toString());
 			writer.flush();
 			writer.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
 	}
 	
 	/**
@@ -430,7 +372,7 @@ public class IntegratedRunner {
 		XYSeriesCollection collection = new XYSeriesCollection();
 		for (int i = 0; i < clustering.getAllClusters().size(); i++) {
 			Cluster<KMeansModel> cluster = clustering.getAllClusters().get(i);
-			XYSeries series = new XYSeries(i);
+			XYSeries series = new XYSeries(i+1);
 			for (DBIDIter it = cluster.getIDs().iter(); it.valid(); it.advance()) {
 				int objectID = ids.getOffset(it);
 				double[] row = plotData[objectID];
@@ -458,7 +400,7 @@ public class IntegratedRunner {
 		XYSeriesCollection collection = new XYSeriesCollection();
 		for (int i = 0; i < clustering.getAllClusters().size(); i++) {
 			Cluster<Model> cluster = clustering.getAllClusters().get(i);
-			XYSeries series = new XYSeries(i);
+			XYSeries series = new XYSeries(i+1);
 			for (DBIDIter it = cluster.getIDs().iter(); it.valid(); it.advance()) {
 				int objectID = ids.getOffset(it);
 				double[] row = plotData[objectID];

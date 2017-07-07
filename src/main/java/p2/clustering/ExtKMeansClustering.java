@@ -1,13 +1,8 @@
 package p2.clustering;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import de.lmu.ifi.dbs.elki.data.Cluster;
 import de.lmu.ifi.dbs.elki.data.Clustering;
 import de.lmu.ifi.dbs.elki.data.model.KMeansModel;
-import de.lmu.ifi.dbs.elki.database.ids.DBIDIter;
 import de.lmu.ifi.dbs.elki.database.ids.DBIDRange;
 
 public class ExtKMeansClustering {

@@ -1,7 +1,5 @@
 package p2.clustering;
 
-import java.text.NumberFormat;
-
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 public class ExtData {
