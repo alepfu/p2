@@ -21,6 +21,8 @@ public class ExtDBSCANClustering {
 		this.dummy = dummy;
 		this.ids = ids;
 		
+		//TODO make logging configurable
+		
 		//Log clustering
 		StringBuilder log = new StringBuilder();
 		log.append("\nDBSCAN clustering:\n");
@@ -44,7 +46,7 @@ public class ExtDBSCANClustering {
 		System.out.println(log);
 		
 		//Log dummy encoding
-		log = new StringBuilder();
+		/*log = new StringBuilder();
 		log.append("\nDBSCAN clustering dummy encoded:\n");
 		for (int row = 0; row < 3; row++) { 
 			String rowString = "";
@@ -53,7 +55,7 @@ public class ExtDBSCANClustering {
 			log.append(rowString + "\n");
 		}
 		log.append("...\n");
-		System.out.println(log);
+		System.out.println(log);*/
 	}
 
 	public Clustering<Model> getClustering() {

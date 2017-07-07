@@ -21,14 +21,16 @@ public class ExtKMeansClustering {
 		this.dummy = dummy;
 		this.ids = ids;
 
+		//TODO make logging configurable
+		
 		//Log the clustering
 		StringBuilder log = new StringBuilder();
 		log.append("\nKMeans clustering:\n");
 		int clusterId = 1;
 		for (Cluster<KMeansModel> c : clustering.getAllClusters()) {
-			log.append("#" + clusterId + " [" + c.size() + ", centroid " + c.getModel().getPrototype().toString() + "]");
+			log.append("#" + clusterId + " [" + c.size() /*+ ", centroid " + c.getModel().getPrototype().toString() */ + "]");
 			
-			
+			/*
 			List<Integer> idList = new ArrayList<Integer>();
 			for (DBIDIter it = c.getIDs().iter(); it.valid(); it.advance())
 				idList.add(ids.getOffset(it));
@@ -36,7 +38,7 @@ public class ExtKMeansClustering {
 			Collections.sort(idList);
 			for (Integer id : idList)
 				log.append(" " + id);
-			
+			*/
 			
 			log.append("\n");
 			++clusterId;
@@ -44,7 +46,7 @@ public class ExtKMeansClustering {
 		System.out.println(log);
 
 		//Log dummy encoding
-		log = new StringBuilder();
+		/*log = new StringBuilder();
 		log.append("\nKMeans clustering dummy encoded:\n");
 		for (int row = 0; row < 3; row++) { 
 			String rowString = "";
@@ -53,7 +55,7 @@ public class ExtKMeansClustering {
 			log.append(rowString + "\n");
 		}
 		log.append("...\n");
-		System.out.println(log);
+		System.out.println(log);*/
 	}
 
 	public Clustering<KMeansModel> getClustering() {

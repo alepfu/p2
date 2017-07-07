@@ -4,9 +4,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
@@ -16,6 +13,8 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
+import de.lmu.ifi.dbs.elki.algorithm.KNNDistancesSampler;
+import de.lmu.ifi.dbs.elki.algorithm.KNNDistancesSampler.KNNDistanceOrderResult;
 import de.lmu.ifi.dbs.elki.algorithm.clustering.DBSCAN;
 import de.lmu.ifi.dbs.elki.algorithm.clustering.kmeans.KMeansMacQueen;
 import de.lmu.ifi.dbs.elki.data.Cluster;
@@ -30,11 +29,11 @@ import de.lmu.ifi.dbs.elki.database.Database;
 import de.lmu.ifi.dbs.elki.database.StaticArrayDatabase;
 import de.lmu.ifi.dbs.elki.database.ids.DBIDIter;
 import de.lmu.ifi.dbs.elki.database.ids.DBIDRange;
-import de.lmu.ifi.dbs.elki.database.ids.DBIDs;
 import de.lmu.ifi.dbs.elki.database.relation.Relation;
 import de.lmu.ifi.dbs.elki.datasource.ArrayAdapterDatabaseConnection;
 import de.lmu.ifi.dbs.elki.distance.distancefunction.minkowski.EuclideanDistanceFunction;
 import de.lmu.ifi.dbs.elki.index.tree.spatial.rstarvariants.rstar.RStarTreeFactory;
+import de.lmu.ifi.dbs.elki.math.geometry.XYCurve;
 import de.lmu.ifi.dbs.elki.utilities.ClassGenericsUtil;
 import de.lmu.ifi.dbs.elki.utilities.optionhandling.parameterization.ListParameterization;
 import p2.old.StatisticsUtil;
@@ -120,24 +119,26 @@ public class IntegratedRunner {
 //		ExtDBSCANClustering dbscan2 = runner.runSingleDBSCAN(runner.dataGauss, 5, 2.0);
 //		saveClusteringToFile(workDir + "/dbscan_gauss.csv", dbscan2.getClustering());
 //		plotDBSCANClustering(dbscan2.getClustering(), runner.dataGauss, dbscan2.getIds(), workDir + "/dbscan_gauss.jpeg");
-		
-//		ExtDBSCANClustering dbscan3 = runner.runSingleDBSCAN(runner.dataDensity, 5, 2.5);
+//		ExtDBSCANClustering dbscan3 = runner.runSingleDBSCAN(runner.dataDensity, 10, 1.75);
 //		saveClusteringToFile(workDir + "/dbscan_density.csv", dbscan3.getClustering());
-//		plotDBSCANClustering(dbscan3.getClustering(), runner.dataDensity, dbscan3.getIds(), workDir + "/dbscan_density.jpeg");
+		//plotDBSCANClustering(dbscan3.getClustering(), runner.dataDensity, dbscan3.getIds(), workDir + "/dbscan_density.jpeg");
 		
 		
 		/**
 		 * 
 		 * 
-		 * Running DBSCAN and KMeans alternately
-		 * =====================================
+		 * Running DBSCAN and KMeans alternately in a loop
+		 * ===============================================
 		 * 
 		 */
 		int numRuns = 8;
+
 		ExtKMeansClustering kmeans = null;
 		ExtDBSCANClustering dbscan = null;
 		
-		double[][] extData = null;
+		int minPts = 10;
+		boolean doEpsilonEstimation = false;
+		
 		for (int r = 1; r <= numRuns; r++) {
 	
 			//KMeans on gauss features with dummy encoding (for r > 1) from DBSCAN
@@ -145,11 +146,13 @@ public class IntegratedRunner {
 			saveClusteringToFile(workDir + "/run_" + (r++) + ".csv", kmeans.getClustering());
 			
 			//DBSCAN on density features with dummy encoding from KMeans
-			//dbscan = runner.runMultipleDBSCAN(runner.getExtData(runner.dataDensity, kmeans.getDummy()), 7, 1, minPts);
-			dbscan = runner.runSingleDBSCAN(runner.dataDensity, 5, 1.0);
+			dbscan = runner.runSingleDBSCAN(runner.getExtData(runner.dataDensity, kmeans.getDummy()), minPts, 16, doEpsilonEstimation);
 			saveClusteringToFile(workDir + "/run_" + r + ".csv", dbscan.getClustering());
 			
 		}
+		
+//		plotKMeansClustering(kmeans.getClustering(), runner.dataGauss, kmeans.getIds(), workDir + "/kmeans_final.jpeg");
+//		plotDBSCANClustering(dbscan.getClustering(), runner.dataDensity, dbscan.getIds(), workDir + "/dbscan_final.jpeg");
 
 		
 		System.out.println("\nFinished.");
@@ -228,7 +231,7 @@ public class IntegratedRunner {
 	 * @param epsilon The epsilon parameter of the DBSCAN algorithm.
 	 * @return A clustering result with additional dummy encoding.
 	 */
-	private ExtDBSCANClustering runSingleDBSCAN(double[][] data, int minPts, double epsilon) {
+	private ExtDBSCANClustering runSingleDBSCAN(double[][] data, int minPts, double epsilon, boolean doEpsilonEstimation) {
 		
 		System.out.println("Running Single-DBSCAN ...");
 		
@@ -239,13 +242,17 @@ public class IntegratedRunner {
 		Database densityDB = ClassGenericsUtil.parameterizeOrAbort(StaticArrayDatabase.class, densityDBParams);
 		densityDB.initialize();
 		
-		Relation<NumberVector> densityRel = densityDB.getRelation(TypeUtil.NUMBER_VECTOR_FIELD);
+		Relation<DoubleVector> densityRel = densityDB.getRelation(TypeUtil.NUMBER_VECTOR_FIELD);
 	    DBIDRange densityIDs = (DBIDRange) densityRel.getDBIDs();
 		
 		ListParameterization dbscanParams = new ListParameterization();
 		dbscanParams.addParameter(DBSCAN.Parameterizer.EPSILON_ID, epsilon);
 		dbscanParams.addParameter(DBSCAN.Parameterizer.MINPTS_ID, minPts);
 		dbscanParams.addParameter(DBSCAN.DISTANCE_FUNCTION_ID, EuclideanDistanceFunction.class);
+		
+		//Sample some KNN-distances for estimating a good epsilon
+		if (doEpsilonEstimation)
+			estimateDBSCANEpsilonParameter(minPts, densityDB, densityRel);
 		
 		//Run DBSCAN
 		DBSCAN<DoubleVector> dbscan = ClassGenericsUtil.parameterizeOrAbort(DBSCAN.class, dbscanParams);
@@ -400,9 +407,10 @@ public class IntegratedRunner {
 			for (int col = numColsData; col < numColsConcat; col++)
 				extData[row][col] = dummy[row][col - numColsData];		
 		
+		//TODO make logging configurable
 		
 		//Log the result
-		NumberFormat nf = NumberFormat.getInstance();
+		/*NumberFormat nf = NumberFormat.getInstance();
 		nf.setMinimumFractionDigits(2);
 		nf.setMaximumFractionDigits(2);
 		StringBuilder log = new StringBuilder("\nExtended data:\n");
@@ -412,7 +420,7 @@ public class IntegratedRunner {
 			log.append("\n");
 		}
 		log.append("...\n");
-		System.out.println(log);
+		System.out.println(log);*/
 		
 		return extData;
 	}
@@ -432,7 +440,7 @@ public class IntegratedRunner {
 		}
 		
 		JFreeChart chartDensity = ChartFactory.createScatterPlot("", "", "", collection, 
-				PlotOrientation.VERTICAL, false, false, false);
+				PlotOrientation.VERTICAL, true, false, false);
 		
 		try {
 			ChartUtilities.saveChartAsJPEG(new File(filename), chartDensity, 660, 420);
@@ -460,7 +468,7 @@ public class IntegratedRunner {
 		}
 		
 		JFreeChart chartDensity = ChartFactory.createScatterPlot("", "", "", collection, 
-				PlotOrientation.VERTICAL, false, false, false);
+				PlotOrientation.VERTICAL, true, false, false);
 		
 		try {
 			ChartUtilities.saveChartAsJPEG(new File(filename), chartDensity, 660, 420);
@@ -471,5 +479,31 @@ public class IntegratedRunner {
 		ChartFrame frame = new ChartFrame(filename, chartDensity);
 		frame.pack();
 		frame.setVisible(true);
+	}
+	
+	public double estimateDBSCANEpsilonParameter(int minPts, Database db, Relation<DoubleVector> rel) {
+		
+		ListParameterization params = new ListParameterization();
+		params.addParameter(KNNDistancesSampler.DISTANCE_FUNCTION_ID, EuclideanDistanceFunction.class);
+		params.addParameter(KNNDistancesSampler.Parameterizer.K_ID, minPts - 1);
+		params.addParameter(KNNDistancesSampler.Parameterizer.SAMPLING_ID, 0.2);
+		params.addParameter(KNNDistancesSampler.Parameterizer.SEED_ID, 1234);
+		
+		KNNDistancesSampler<DoubleVector> knn = ClassGenericsUtil.parameterizeOrAbort(KNNDistancesSampler.class, params);
+		KNNDistanceOrderResult result = knn.run(db, rel);
+		
+		
+		XYSeriesCollection coll = new XYSeriesCollection();
+		XYSeries series = new XYSeries("knn distances");
+		coll.addSeries(series);
+		for (XYCurve.Itr it = result.iterator(); it.valid(); it.advance()) 
+			series.add(it.getX(), it.getY());
+		JFreeChart chart = ChartFactory.createXYLineChart("", "", "", coll, PlotOrientation.VERTICAL, true, false, false);
+		ChartFrame frame = new ChartFrame("knn distances", chart);
+		frame.pack();
+		frame.setVisible(true);
+			 
+		
+		return 0;   //TODO work in progress
 	}
 }

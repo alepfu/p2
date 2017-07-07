@@ -56,7 +56,7 @@ public class ExtData {
 		
 		
 		//DEBUG log
-		NumberFormat nf = NumberFormat.getInstance();
+		/*NumberFormat nf = NumberFormat.getInstance();
 		nf.setMinimumFractionDigits(2);
 		nf.setMaximumFractionDigits(2);
 		StringBuilder log = new StringBuilder("\nExtended data:\n");
@@ -66,7 +66,7 @@ public class ExtData {
 			log.append("\n");
 		}
 		log.append("...");
-		System.out.println(log);
+		System.out.println(log);*/
 		
 		return extData;
 	}
