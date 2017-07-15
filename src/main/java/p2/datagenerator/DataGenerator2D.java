@@ -55,10 +55,10 @@ public class DataGenerator2D {
 		//Generate gauss clusters
 		System.out.println("Generate gauss clusters ...");
 		double[] mean1 = {0, 0};
-		double dev1 = 50;
+		double dev1 = 30;
 		Gaussian2DCluster g1 = new Gaussian2DCluster(numPointsCluster, mean1, dev1, rand);
-		double[] mean2 = {130, 130};
-		double dev2 = 50;
+		double[] mean2 = {60, 60};
+		double dev2 = 70;
 		Gaussian2DCluster g2 = new Gaussian2DCluster(numPointsCluster, mean2, dev2, rand);
 		
 		
@@ -66,7 +66,7 @@ public class DataGenerator2D {
 		System.out.println("Generate density clusters ...");
 		double[] dpos1 = {0, 0};		
 		Density2DCluster d1 = new Density2DCluster(numPointsCluster, Density2DCluster.TYPE_ARC_UP, dpos1, rand, true);
-		double[] dpos2 = {100, 98.3};
+		double[] dpos2 = {0, 200.9};
 		Density2DCluster d2 = new Density2DCluster(numPointsCluster, Density2DCluster.TYPE_ARC_DOWN, dpos2, rand, true);
 		
 		
@@ -107,9 +107,9 @@ public class DataGenerator2D {
 		
 		//Plotting
 		plotGaussianClusters(g1.getPoints(), g2.getPoints(), workDir + "/true_gauss.jpeg");
-		plotGaussianClustersGoodBad(g1.getPoints(), g2.getPoints(), workDir + "/badgood_gauss.jpeg", goodIds1, goodIds2, badIds1, badIds2);
+//		plotGaussianClustersGoodBad(g1.getPoints(), g2.getPoints(), workDir + "/badgood_gauss.jpeg", goodIds1, goodIds2, badIds1, badIds2);
 		plotDensityClusters(d1.getPoints(), d2.getPoints(), workDir + "/true_density.jpeg");
-		//plotDensityClustersLow(d1.getPoints(), d2.getPoints(), workDir + "/low_density.jpeg", lowIds1, lowIds2); 				
+//		plotDensityClustersLow(d1.getPoints(), d2.getPoints(), workDir + "/low_density.jpeg", lowIds1, lowIds2); 				
 			
 		
 		//Merge data points together
