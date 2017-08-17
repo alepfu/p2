@@ -82,13 +82,13 @@ public class IntegratedRunner {
 		IntegratedRunner runner = new IntegratedRunner(workDir + "/data.csv");
 		
 		int minPts = 4;
-//		runner.estimateDBSCANEpsilon(runner.data, minPts, "full");
-//		runner.estimateDBSCANEpsilon(runner.dataGauss, minPts, "gauss");
-//		runner.estimateDBSCANEpsilon(runner.dataDensity, minPts, "density");
+		runner.estimateDBSCANEpsilon(runner.data, minPts, "full");
+		runner.estimateDBSCANEpsilon(runner.dataGauss, minPts, "gauss");
+		runner.estimateDBSCANEpsilon(runner.dataDensity, minPts, "density");
 		
-		double epsilonFull = 25;
-		double epsilonGauss= 10;
-		double epsilonDensity = 1;
+		double epsilonFull = 45;
+		double epsilonGauss= 40;
+		double epsilonDensity = 4.5;
 		
 		/**
 		 * 
@@ -125,10 +125,10 @@ public class IntegratedRunner {
 		 * 
 		 */
 		
-		double epsilonDummy = 1;
+		double epsilonDummy = 6;
 		
 		ExtKMeansClustering kmeans1 = runner.runKMeans(runner.dataGauss, "kmeans1");
-		//runner.estimateDBSCANEpsilon(runner.getExtData(runner.dataDensity, kmeans1.getDummy()), minPts, "dummy1");
+		runner.estimateDBSCANEpsilon(runner.getExtData(runner.dataDensity, kmeans1.getDummy()), minPts, "dummy1");
 		ExtDBSCANClustering dbscan1 = runner.runDBSCAN(runner.getExtData(runner.dataDensity, kmeans1.getDummy()), minPts, epsilonDummy, "dbscan1");
 		ExtKMeansClustering kmeans2 = runner.runKMeans(runner.getExtData(runner.dataGauss, dbscan1.getDummy()), "kmeans2");
 		ExtDBSCANClustering dbscan2 = runner.runDBSCAN(runner.getExtData(runner.dataDensity, kmeans2.getDummy()), minPts, epsilonDummy, "dbscan2");
