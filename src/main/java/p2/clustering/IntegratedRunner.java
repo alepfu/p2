@@ -3,9 +3,6 @@ package p2.clustering;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.text.spi.NumberFormatProvider;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
@@ -38,30 +35,21 @@ import de.lmu.ifi.dbs.elki.index.tree.spatial.rstarvariants.rstar.RStarTreeFacto
 import de.lmu.ifi.dbs.elki.math.geometry.XYCurve;
 import de.lmu.ifi.dbs.elki.utilities.ClassGenericsUtil;
 import de.lmu.ifi.dbs.elki.utilities.optionhandling.parameterization.ListParameterization;
+import p2.util.Config;
 import p2.util.DataLoaderUtil;
 import p2.util.StatisticsUtil;
 
 public class IntegratedRunner {
-
-	/**
-	 * Number of dimensions for each cluster type.
-	 */
-	private int numDimPerType;
 	
 	/**
-	 * Number of clusters.
+	 * Number of clusters
 	 */
-	private int numClusters;
+	private int numClusters = Config.numClusters;
 	
 	/**
-	 * Number of points per cluster. 
+	 * Total number of points
 	 */
-	private int numPointsCluster;
-	
-	/**
-	 * Total number of points. 
-	 */
-	private int numPoints;
+	private int numPoints = Config.numPointsCluster * Config.numClusters;
 	
 	/**
 	 * Data points
@@ -69,23 +57,22 @@ public class IntegratedRunner {
 	private double[][] data;
 	
 	/**
-	 * Gaussian part of the data.
+	 * Gauss part of the data
 	 */
 	private double[][] dataGauss;
 	
 	/**
-	 * Density part of the data.
+	 * Density part of the data
 	 */
 	private double[][] dataDensity;
 	
 	/**
 	 * Working directory
 	 */
-	private final static String workDir = "/home/alepfu/Desktop/P2";
+	private final static String workDir = Config.workDir;
 	
 	/**
 	 * Diplay plots
-	 * 
 	 */
 	private static boolean showPlots = false;
 	
@@ -167,22 +154,14 @@ public class IntegratedRunner {
 	}
 	
 	/**
-	 * Constructor
-	 * Loads data and header information for a given file, generates ground truth clustering.
+	 * Constructor, loads data and header information for a given file.
 	 * @param file The full filename.
 	 */
 	public IntegratedRunner(String file) {
 
-		//TODO get rid of file header and make a simple configuration class!
-		
-		System.out.println("Loading data ...");
 		DataLoaderUtil dataUtil = new DataLoaderUtil(file);	
-		numDimPerType = dataUtil.getNumDimPerType();
-		numClusters = dataUtil.getNumClusters();
-		numPointsCluster = dataUtil.getNumPointsCluster();
-		numPoints = numClusters * numPointsCluster;
 		data = dataUtil.loadData();
-		dataGauss = dataUtil.getGaussianData();
+		dataGauss = dataUtil.getGaussData();
 		dataDensity = dataUtil.getDensityData();
 	}
 	
@@ -340,8 +319,6 @@ public class IntegratedRunner {
 		for (int row = 0; row < numRows; row++)
 			for (int col = numColsData; col < numColsConcat; col++)
 				extData[row][col] = dummy[row][col - numColsData];		
-		
-		//TODO make logging configurable
 		
 		//Log the result
 		/*NumberFormat nf = NumberFormat.getInstance();

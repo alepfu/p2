@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-public class Density2DCluster {
+public class DensityCluster {
 	
 	public final static String TYPE_ARC_UP = "arcup";
 	public final static String TYPE_ARC_DOWN = "arcdown";
@@ -28,7 +28,7 @@ public class Density2DCluster {
 	private List<Integer> lowIds;
 	private List<Integer> highIds;
 	
-	public Density2DCluster(int numPoints, String type, double[] position, Random rand, boolean doLowDensityRegions) {
+	public DensityCluster(int numPoints, String type, double[] position, Random rand, boolean doLowDensityRegions) {
 		
 		this.numPoints = numPoints;
 		this.type = type;

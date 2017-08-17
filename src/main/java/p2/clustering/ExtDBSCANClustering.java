@@ -16,8 +16,6 @@ public class ExtDBSCANClustering {
 		this.dummy = dummy;
 		this.ids = ids;
 		
-		//TODO make logging configurable
-		
 		//Log clustering
 		StringBuilder log = new StringBuilder();
 		log.append("\nDBSCAN clustering:\n");

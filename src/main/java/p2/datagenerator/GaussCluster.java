@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class Gaussian2DCluster {
+public class GaussCluster {
 
 	private int numPoints;
 	private List<double[]> points;
@@ -12,7 +12,7 @@ public class Gaussian2DCluster {
 	private double[] mean; 
 	private Random rand;
 	
-	public Gaussian2DCluster(int numPoints, double[] mean, double deviation, Random rand) {
+	public GaussCluster(int numPoints, double[] mean, double deviation, Random rand) {
 		
 		this.numPoints = numPoints;
 		this.points = new ArrayList<double[]>();
