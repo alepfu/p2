@@ -82,13 +82,12 @@ public class IntegratedRunner {
 		IntegratedRunner runner = new IntegratedRunner(workDir + "/data.csv");
 		
 		int minPts = 4;
-		runner.estimateDBSCANEpsilon(runner.data, minPts, "full");
-		runner.estimateDBSCANEpsilon(runner.dataGauss, minPts, "gauss");
-		runner.estimateDBSCANEpsilon(runner.dataDensity, minPts, "density");
 		
-		double epsilonFull = 45;
-		double epsilonGauss= 40;
-		double epsilonDensity = 4.5;
+//		runner.estimateDBSCANEpsilon(runner.data, minPts, "full");
+		double epsilonFull = 25; //22;
+		
+//		runner.estimateDBSCANEpsilon(runner.dataDensity, minPts, "density");
+		double epsilonDensity = 1;
 		
 		/**
 		 * 
@@ -99,20 +98,14 @@ public class IntegratedRunner {
 		 */
 		
 		//Full data
-		ExtKMeansClustering kmeansFull = runner.runKMeans(runner.data, "kmeans_full"); 
-		plotKMeansClustering(kmeansFull.getClustering(), runner.data, kmeansFull.getIds(), workDir + "/kmeans_full.jpeg");		
+		ExtKMeansClustering kmeansFull = runner.runKMeans(runner.data, "kmeans_full"); 		
 		ExtDBSCANClustering dbscanFull = runner.runDBSCAN(runner.data, minPts, epsilonFull, "dbscan_full");
-		plotDBSCANClustering(dbscanFull.getClustering(), runner.data, dbscanFull.getIds(), workDir + "/dbscan_full.jpeg");
 		
 		//Gauss data
 		ExtKMeansClustering kmeansGauss = runner.runKMeans(runner.dataGauss, "kmeans_gauss"); 
 		plotKMeansClustering(kmeansGauss.getClustering(), runner.dataGauss, kmeansGauss.getIds(), workDir + "/kmeans_gauss.jpeg");		
-		ExtDBSCANClustering dbscanGauss = runner.runDBSCAN(runner.dataGauss, minPts, epsilonGauss, "dbscan_gauss");
-		plotDBSCANClustering(dbscanGauss.getClustering(), runner.dataGauss, dbscanGauss.getIds(), workDir + "/dbscan_gauss.jpeg");
 		
-		//Density data
-		ExtKMeansClustering kmeansDensity = runner.runKMeans(runner.dataDensity, "kmeans_density"); 
-		plotKMeansClustering(kmeansDensity.getClustering(), runner.dataDensity, kmeansDensity.getIds(), workDir + "/kmeans_density.jpeg");		
+		//Density data	
 		ExtDBSCANClustering dbscanDensity = runner.runDBSCAN(runner.dataDensity, minPts, epsilonDensity, "dbscan_density");
 		plotDBSCANClustering(dbscanDensity.getClustering(), runner.dataDensity, dbscanDensity.getIds(), workDir + "/dbscan_density.jpeg");
 	
@@ -125,19 +118,41 @@ public class IntegratedRunner {
 		 * 
 		 */
 		
-		double epsilonDummy = 6;
+		double epsilonDummy = 1; //0.85;
 		
 		ExtKMeansClustering kmeans1 = runner.runKMeans(runner.dataGauss, "kmeans1");
-		runner.estimateDBSCANEpsilon(runner.getExtData(runner.dataDensity, kmeans1.getDummy()), minPts, "dummy1");
+//		runner.estimateDBSCANEpsilon(runner.getExtData(runner.dataDensity, kmeans1.getDummy()), minPts, "dummy1");
 		ExtDBSCANClustering dbscan1 = runner.runDBSCAN(runner.getExtData(runner.dataDensity, kmeans1.getDummy()), minPts, epsilonDummy, "dbscan1");
+		
 		ExtKMeansClustering kmeans2 = runner.runKMeans(runner.getExtData(runner.dataGauss, dbscan1.getDummy()), "kmeans2");
 		ExtDBSCANClustering dbscan2 = runner.runDBSCAN(runner.getExtData(runner.dataDensity, kmeans2.getDummy()), minPts, epsilonDummy, "dbscan2");
+		
 		ExtKMeansClustering kmeans3 = runner.runKMeans(runner.getExtData(runner.dataGauss, dbscan2.getDummy()), "kmeans3");
 		ExtDBSCANClustering dbscan3 = runner.runDBSCAN(runner.getExtData(runner.dataDensity, kmeans3.getDummy()), minPts, epsilonDummy, "dbscan3");
+		
 		ExtKMeansClustering kmeans4 = runner.runKMeans(runner.getExtData(runner.dataGauss, dbscan3.getDummy()), "kmeans4");
 		ExtDBSCANClustering dbscan4 = runner.runDBSCAN(runner.getExtData(runner.dataDensity, kmeans4.getDummy()), minPts, epsilonDummy, "dbscan4");
+		
 		ExtKMeansClustering kmeans5 = runner.runKMeans(runner.getExtData(runner.dataGauss, dbscan4.getDummy()), "kmeans5");
 		ExtDBSCANClustering dbscan5 = runner.runDBSCAN(runner.getExtData(runner.dataDensity, kmeans5.getDummy()), minPts, epsilonDummy, "dbscan5");
+		
+		ExtKMeansClustering kmeans6 = runner.runKMeans(runner.getExtData(runner.dataGauss, dbscan5.getDummy()), "kmeans6");
+		ExtDBSCANClustering dbscan6 = runner.runDBSCAN(runner.getExtData(runner.dataDensity, kmeans6.getDummy()), minPts, epsilonDummy, "dbscan6");
+		
+		ExtKMeansClustering kmeans7 = runner.runKMeans(runner.getExtData(runner.dataGauss, dbscan6.getDummy()), "kmeans7");
+		ExtDBSCANClustering dbscan7 = runner.runDBSCAN(runner.getExtData(runner.dataDensity, kmeans7.getDummy()), minPts, epsilonDummy, "dbscan7");
+		
+		ExtKMeansClustering kmeans8 = runner.runKMeans(runner.getExtData(runner.dataGauss, dbscan7.getDummy()), "kmeans8");
+		ExtDBSCANClustering dbscan8 = runner.runDBSCAN(runner.getExtData(runner.dataDensity, kmeans8.getDummy()), minPts, epsilonDummy, "dbscan8");
+		
+		ExtKMeansClustering kmeans9 = runner.runKMeans(runner.getExtData(runner.dataGauss, dbscan8.getDummy()), "kmeans9");
+		ExtDBSCANClustering dbscan9 = runner.runDBSCAN(runner.getExtData(runner.dataDensity, kmeans9.getDummy()), minPts, epsilonDummy, "dbscan9");
+		
+		ExtKMeansClustering kmeans10 = runner.runKMeans(runner.getExtData(runner.dataGauss, dbscan9.getDummy()), "kmeans10");
+		ExtDBSCANClustering dbscan10 = runner.runDBSCAN(runner.getExtData(runner.dataDensity, kmeans10.getDummy()), minPts, epsilonDummy, "dbscan10");
+		
+		
+		
 		
 		
 //		int numRuns = 10;
@@ -149,6 +164,8 @@ public class IntegratedRunner {
 //			kmeans = runner.runKMeans(r == 1 ? runner.dataGauss : runner.getExtData(runner.dataGauss, dbscan.getDummy()), "run_" + (r++));
 //			dbscan = runner.runDBSCAN(runner.getExtData(runner.dataDensity, kmeans.getDummy()), minPts, epsilonDensity, "run_" + (r++));
 //		}
+		
+		
 		
 		System.out.println("\nFinished.");
 	}
@@ -410,8 +427,8 @@ public class IntegratedRunner {
 		ListParameterization paramsKNN = new ListParameterization();
 		paramsKNN.addParameter(KNNDistancesSampler.DISTANCE_FUNCTION_ID, EuclideanDistanceFunction.class);
 		paramsKNN.addParameter(KNNDistancesSampler.Parameterizer.K_ID, minPts - 1);
-		paramsKNN.addParameter(KNNDistancesSampler.Parameterizer.SAMPLING_ID, 0.2);
-		paramsKNN.addParameter(KNNDistancesSampler.Parameterizer.SEED_ID, 1234);
+		paramsKNN.addParameter(KNNDistancesSampler.Parameterizer.SAMPLING_ID, 1.0);
+		paramsKNN.addParameter(KNNDistancesSampler.Parameterizer.SEED_ID, System.currentTimeMillis());
 		
 		KNNDistancesSampler<DoubleVector> knn = ClassGenericsUtil.parameterizeOrAbort(KNNDistancesSampler.class, paramsKNN);
 		KNNDistanceOrderResult result = knn.run(db, rel);

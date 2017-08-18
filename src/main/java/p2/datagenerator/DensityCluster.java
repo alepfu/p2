@@ -419,10 +419,10 @@ public class DensityCluster {
 		
 		int numCorePoints = numPoints / 2;
 		
-		double coreMinX = -30;
-		double coreMaxX = -15;
-		double coreMinY = 70;
-		double coreMaxY = 80;
+		double coreMinX = 0;
+		double coreMaxX = 20;
+		double coreMinY = 38;
+		double coreMaxY = 40;
 		
 		List<double[]> corePoints = new ArrayList<double[]>();
 		for (int i = 0; i < numCorePoints; i++) {
@@ -435,10 +435,10 @@ public class DensityCluster {
 			corePoints.add(corePoint);
 		}
 		
-		double borderMinX = -30;
-		double borderMaxX = 25;
+		double borderMinX = 0;
+		double borderMaxX = 20;
 		double borderMinY = 0;
-		double borderMaxY = 80;
+		double borderMaxY = 40;
 		
 		List<double[]> borderPoints = new ArrayList<double[]>();
 		for (int i = 0; i < (numPoints - numCorePoints); ) {

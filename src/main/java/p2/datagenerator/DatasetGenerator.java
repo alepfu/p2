@@ -42,9 +42,9 @@ public class DatasetGenerator {
 	
 	public static void main(String[] args) {
 		
-		//generateDataset1();
+		generateDataset1();
 		
-		generateDataset2();
+		//generateDataset2();
 		
 	}
 	
@@ -62,7 +62,7 @@ public class DatasetGenerator {
 		//Generate density clusters with low density regions
 		double[] dpos1 = {0, 0};		
 		DensityCluster d1 = new DensityCluster(numPointsCluster, DensityCluster.TYPE_ARC_UP_1, dpos1, rand);
-		double[] dpos2 = {0,16};
+		double[] dpos2 = {-10, 58.2};
 		DensityCluster d2 = new DensityCluster(numPointsCluster, DensityCluster.TYPE_BOX, dpos2, rand);
 		
 		
@@ -85,7 +85,7 @@ public class DatasetGenerator {
 //		plotGaussClusters(g1.getPoints(), g2.getPoints(), workDir + "/true_gauss.jpeg");
 //		plotGaussClustersGoodBad(g1.getPoints(), g2.getPoints(), workDir + "/badgood_gauss.jpeg", goodIds1, goodIds2, badIds1, badIds2);
 		plotDensityClusters(d1.getPoints(), d2.getPoints(), workDir + "/true_density.jpeg");
-		plotDensityClustersLow(d1.getPoints(), d2.getPoints(), workDir + "/low_density.jpeg", lowIds1, lowIds2); 				
+//		plotDensityClustersLow(d1.getPoints(), d2.getPoints(), workDir + "/low_density.jpeg", lowIds1, lowIds2); 				
 			
 		
 		//Merge data points together
@@ -143,10 +143,10 @@ public class DatasetGenerator {
 		
 
 		//Plotting
-		plotGaussClusters(g1.getPoints(), g2.getPoints(), workDir + "/true_gauss.jpeg");
-		plotGaussClustersGoodBad(g1.getPoints(), g2.getPoints(), workDir + "/badgood_gauss.jpeg", goodIds1, goodIds2, badIds1, badIds2);
+//		plotGaussClusters(g1.getPoints(), g2.getPoints(), workDir + "/true_gauss.jpeg");
+//		plotGaussClustersGoodBad(g1.getPoints(), g2.getPoints(), workDir + "/badgood_gauss.jpeg", goodIds1, goodIds2, badIds1, badIds2);
 		plotDensityClusters(d1.getPoints(), d2.getPoints(), workDir + "/true_density.jpeg");
-		plotDensityClustersLow(d1.getPoints(), d2.getPoints(), workDir + "/low_density.jpeg", lowIds1, lowIds2); 				
+//		plotDensityClustersLow(d1.getPoints(), d2.getPoints(), workDir + "/low_density.jpeg", lowIds1, lowIds2); 				
 			
 		
 		//Merge data points together
@@ -166,8 +166,8 @@ public class DatasetGenerator {
 		int sizeBadHigh1 = badIds1.size() < highIds1.size() ? badIds1.size() : highIds1.size();
 		int sizeGoodLow2 = goodIds2.size() < lowIds2.size() ? goodIds2.size() : lowIds2.size();
 		int sizeBadHigh2 = badIds2.size() < highIds2.size() ? badIds2.size() : highIds2.size();
-		plotVerifyGauss(allDataPoints, workDir + "/verify_gauss.jpeg", sizeGoodLow1, sizeBadHigh1, sizeGoodLow2, sizeBadHigh2);
-		plotVerifyDensity(allDataPoints, workDir + "/verify_density.jpeg", sizeGoodLow1, sizeBadHigh1, sizeGoodLow2, sizeBadHigh2);
+//		plotVerifyGauss(allDataPoints, workDir + "/verify_gauss.jpeg", sizeGoodLow1, sizeBadHigh1, sizeGoodLow2, sizeBadHigh2);
+//		plotVerifyDensity(allDataPoints, workDir + "/verify_density.jpeg", sizeGoodLow1, sizeBadHigh1, sizeGoodLow2, sizeBadHigh2);
 	}
 	
 	private static List<DataPoint> mergePoints(GaussCluster g, DensityCluster d, List<Integer> goodIdsGauss, List<Integer> badIdsGauss, List<Integer> lowIdsDensity, List<Integer> highIdsDensity, String clusterLabel) {
