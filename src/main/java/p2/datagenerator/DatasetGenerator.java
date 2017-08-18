@@ -143,7 +143,7 @@ public class DatasetGenerator {
 		
 
 		//Plotting
-//		plotGaussClusters(g1.getPoints(), g2.getPoints(), workDir + "/true_gauss.jpeg");
+		plotGaussClusters(g1.getPoints(), g2.getPoints(), workDir + "/true_gauss.jpeg");
 //		plotGaussClustersGoodBad(g1.getPoints(), g2.getPoints(), workDir + "/badgood_gauss.jpeg", goodIds1, goodIds2, badIds1, badIds2);
 		plotDensityClusters(d1.getPoints(), d2.getPoints(), workDir + "/true_density.jpeg");
 //		plotDensityClustersLow(d1.getPoints(), d2.getPoints(), workDir + "/low_density.jpeg", lowIds1, lowIds2); 				
@@ -152,11 +152,24 @@ public class DatasetGenerator {
 		//Merge data points together
 		List<DataPoint> dataPoints1 = mergePoints(g1, d1, goodIds1, badIds1, lowIds1, highIds1, "1");
 		List<DataPoint> dataPoints2 = mergePoints(g2, d2, goodIds2, badIds2, lowIds2, highIds2, "2");
+		List<DataPoint> allDataPoints = new ArrayList<DataPoint>();
+		allDataPoints.addAll(dataPoints1);
+		allDataPoints.addAll(dataPoints2);
+		
+		
+		//Add noise
+		// 
+		// !!!!!!!!!!!!! Don't forget to set Config.numNoise Points !!!!!!!!!!!!
+		//
+//		List<DataPoint> noisePoints = getNoisePoints(Config.numNoisePoints, -400, 400, -800, 500, -600, 300, -100, 300);
+//		plotGaussClustersNoise(dataPoints1, dataPoints2, noisePoints, workDir + "/noise_gauss.jpeg");
+//		plotDensityClustersNoise(dataPoints1, dataPoints2, noisePoints, workDir + "/noise_gauss.jpeg");
+//		allDataPoints.addAll(noisePoints);
+		
+		
 		
 		
 		//Export data points and true clustering
-		List<DataPoint> allDataPoints = dataPoints1;
-		allDataPoints.addAll(dataPoints2);
 		saveDataPoints(allDataPoints);
 		saveTrueClustering(allDataPoints);
 		
@@ -519,5 +532,87 @@ public class DatasetGenerator {
 		frame.pack();
 		frame.setVisible(true);
 		
+	}
+	
+	private static List<DataPoint> getNoisePoints(int numNoisePoints, double f1, double t1, double f2, double t2, double f3, double t3, double f4, double t4) {
+		
+		List<DataPoint> noisePoints = new ArrayList<DataPoint>(numNoisePoints);
+		
+		for (int i = 0; i < numNoisePoints; i++) {
+			
+			double[] gauss = new double[2];
+			gauss[0] = f1 + (t1 - f1) * rand.nextDouble();
+			gauss[1] = f2 + (t2 - f2) * rand.nextDouble();
+			
+			double[] density = new double[2];
+			density[0] = f3 + (t3 - f3) * rand.nextDouble();
+			density[1] = f4 + (t4 - f4) * rand.nextDouble();
+			
+			noisePoints.add(new DataPoint(gauss, density, "3"));
+		}
+		
+		return noisePoints;
+	}
+	
+	private static void plotGaussClustersNoise(List<DataPoint> dataPoints1, List<DataPoint> dataPoints2, List<DataPoint> noisePoints, String filename) {
+		
+		XYSeriesCollection dataset = new XYSeriesCollection();
+		XYSeries series1 = new XYSeries("1");
+		XYSeries series2 = new XYSeries("2");
+		XYSeries series0 = new XYSeries("0");
+		dataset.addSeries(series1);
+		dataset.addSeries(series2);
+		dataset.addSeries(series0);
+		
+		for (DataPoint p : dataPoints1)
+			series1.add(p.getGaussFeatures()[0], p.getGaussFeatures()[1]);
+		for (DataPoint p : dataPoints2)
+			series2.add(p.getGaussFeatures()[0], p.getGaussFeatures()[1]);
+		for (DataPoint p : noisePoints)
+			series0.add(p.getGaussFeatures()[0], p.getGaussFeatures()[1]);
+		
+		JFreeChart chart = ChartFactory.createScatterPlot("", "", "", dataset, 
+				PlotOrientation.VERTICAL, true, false, false);
+		
+		try {
+			ChartUtilities.saveChartAsJPEG(new File(filename), chart, 660, 420);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		ChartFrame frame = new ChartFrame(filename, chart);
+		frame.pack();
+		frame.setVisible(true);
+	}
+	
+	private static void plotDensityClustersNoise(List<DataPoint> dataPoints1, List<DataPoint> dataPoints2, List<DataPoint> noisePoints, String filename) {
+		
+		XYSeriesCollection dataset = new XYSeriesCollection();
+		XYSeries series1 = new XYSeries("1");
+		XYSeries series2 = new XYSeries("2");
+		XYSeries series0 = new XYSeries("0");
+		dataset.addSeries(series1);
+		dataset.addSeries(series2);
+		dataset.addSeries(series0);
+		
+		for (DataPoint p : dataPoints1)
+			series1.add(p.getDensityFeatures()[0], p.getDensityFeatures()[1]);
+		for (DataPoint p : dataPoints2)
+			series2.add(p.getDensityFeatures()[0], p.getDensityFeatures()[1]);
+		for (DataPoint p : noisePoints)
+			series0.add(p.getDensityFeatures()[0], p.getDensityFeatures()[1]);
+		
+		JFreeChart chartDensity = ChartFactory.createScatterPlot("", "", "", dataset, 
+				PlotOrientation.VERTICAL, true, false, false);
+		
+		try {
+			ChartUtilities.saveChartAsJPEG(new File(filename), chartDensity, 660, 420);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		ChartFrame frame = new ChartFrame(filename, chartDensity);
+		frame.pack();
+		frame.setVisible(true);
 	}
 }

@@ -47,11 +47,6 @@ public class IntegratedRunner {
 	private int numClusters = Config.numClusters;
 	
 	/**
-	 * Total number of points
-	 */
-	private int numPoints = Config.numPointsCluster * Config.numClusters;
-	
-	/**
 	 * Data points
 	 */
 	private double[][] data;
@@ -208,7 +203,7 @@ public class IntegratedRunner {
 		Clustering<KMeansModel> clu = kmeans.run(db);
 		
 		//Generate dummy encoding
-		double[][] dummy = new double[numPoints][numClusters];		
+		double[][] dummy = new double[Config.numPoints][Config.numClusters];		
 		int clusterID = 0;
 		for (Cluster<KMeansModel> c : clu.getAllClusters()) {
 			for (DBIDIter it = c.getIDs().iter(); it.valid(); it.advance())
@@ -252,7 +247,8 @@ public class IntegratedRunner {
 		DBSCAN<DoubleVector> dbscan = ClassGenericsUtil.parameterizeOrAbort(DBSCAN.class, dbscanParams);
 		Clustering<Model> clu = dbscan.run(db);
 		
-		//Strip 0-element clusters
+		//Strip 0-element clusters		
+		//TODO it seems this is not needed anymore, maybe remove if time
 		Clustering<Model> stripped = new Clustering<Model>("DBSCAN Clustering", "dbscan-clustering");
 		for (Cluster<Model> c : clu.getAllClusters())
 			if (c.size() > 0)
@@ -260,7 +256,7 @@ public class IntegratedRunner {
 		clu = stripped;
 		
 		//Generate dummy encoding
-		double[][] dummy = new double[numPoints][clu.getAllClusters().size()];
+		double[][] dummy = new double[Config.numPoints][clu.getAllClusters().size()];
 		int clusterID = 0;
 		for (Cluster<Model> c : clu.getAllClusters()) {
 			for (DBIDIter it = c.getIDs().iter(); it.valid(); it.advance()) 
@@ -283,7 +279,7 @@ public class IntegratedRunner {
 	 */
 	private void saveClusteringToFile(String filename, Clustering<? extends Model> clu, DBIDRange ids) {
 		
-		int[] labels = new int[numPoints];
+		int[] labels = new int[Config.numPoints];
 
 		int cluId = 1;
 		for (Cluster<? extends Model> c : clu.getAllClusters()) { 

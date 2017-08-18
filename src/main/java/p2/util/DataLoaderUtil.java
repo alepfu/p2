@@ -19,7 +19,7 @@ public class DataLoaderUtil {
 		if (data != null)
 			return data;
 		
-		data = new double[Config.numClusters * Config.numPointsCluster][4];
+		data = new double[Config.numPoints][4];
 		
 		try {
 			String line = "";
