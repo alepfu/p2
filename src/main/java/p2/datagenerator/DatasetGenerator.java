@@ -1,5 +1,10 @@
 package p2.datagenerator;
 
+import java.awt.Color;
+import java.awt.Paint;
+import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.geom.Ellipse2D;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -10,11 +15,17 @@ import java.util.Random;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
-import org.jfree.chart.ChartUtilities;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.axis.NumberTickUnit;
+import org.jfree.chart.plot.DefaultDrawingSupplier;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+import org.jfree.graphics2d.svg.SVGGraphics2D;
+import org.jfree.graphics2d.svg.SVGUtils;
 
 import p2.util.Config;
 
@@ -42,13 +53,16 @@ public class DatasetGenerator {
 	
 	public static void main(String[] args) {
 		
-		generateDataset1();
+		System.out.println("Generating dataset 1 ...");
+		generateDataset1("dataset_1");
 		
-		//generateDataset2();
+		System.out.println("Generating dataset 2 ...");
+		generateDataset2("dataset_2");
 		
+		System.out.println("\nFinished.");
 	}
 	
-	private static void generateDataset2() {
+	private static void generateDataset2(String dir) {
 		
 		//Generate gauss clusters
 		double[] mean1 = {0, 0};
@@ -81,11 +95,18 @@ public class DatasetGenerator {
 		List<Integer> badIds2 = twoLists.get(1);		
 		
 
-		//Plotting
-//		plotGaussClusters(g1.getPoints(), g2.getPoints(), workDir + "/true_gauss.jpeg");
-//		plotGaussClustersGoodBad(g1.getPoints(), g2.getPoints(), workDir + "/badgood_gauss.jpeg", goodIds1, goodIds2, badIds1, badIds2);
-		plotDensityClusters(d1.getPoints(), d2.getPoints(), workDir + "/true_density.jpeg");
-//		plotDensityClustersLow(d1.getPoints(), d2.getPoints(), workDir + "/low_density.jpeg", lowIds1, lowIds2); 				
+		//Plot clusters
+		if (Config.plotClusters) {
+			plotGaussClusters(g1.getPoints(), g2.getPoints(), workDir + "/" + dir + "/true_gauss");
+			plotDensityClusters(d1.getPoints(), d2.getPoints(), workDir + "/" + dir + "/true_density");
+		}
+		
+		
+		//Plot clusters with good/bad and high/low regions highlighted
+		if (Config.plotClustersHighlighted) {
+			plotGaussClustersGoodBad(g1.getPoints(), g2.getPoints(), workDir + "/" + dir + "/badgood_gauss", goodIds1, goodIds2, badIds1, badIds2);
+			plotDensityClustersLow(d1.getPoints(), d2.getPoints(), workDir + "/" + dir + "/low_density", lowIds1, lowIds2); 				
+		}		
 			
 		
 		//Merge data points together
@@ -96,20 +117,16 @@ public class DatasetGenerator {
 		//Export data points and true clustering
 		List<DataPoint> allDataPoints = dataPoints1;
 		allDataPoints.addAll(dataPoints2);
-		saveDataPoints(allDataPoints);
-		saveTrueClustering(allDataPoints);
+		saveDataPoints(allDataPoints, dir);
+		saveTrueClustering(allDataPoints, dir);
 		
 		
 		//Verify the merged dataset
-		int sizeGoodLow1 = goodIds1.size() < lowIds1.size() ? goodIds1.size() : lowIds1.size();
-		int sizeBadHigh1 = badIds1.size() < highIds1.size() ? badIds1.size() : highIds1.size();
-		int sizeGoodLow2 = goodIds2.size() < lowIds2.size() ? goodIds2.size() : lowIds2.size();
-		int sizeBadHigh2 = badIds2.size() < highIds2.size() ? badIds2.size() : highIds2.size();
-//		plotVerifyGauss(allDataPoints, workDir + "/verify_gauss.jpeg", sizeGoodLow1, sizeBadHigh1, sizeGoodLow2, sizeBadHigh2);
-//		plotVerifyDensity(allDataPoints, workDir + "/verify_density.jpeg", sizeGoodLow1, sizeBadHigh1, sizeGoodLow2, sizeBadHigh2);
+		if (Config.verfiyDataset)
+			verifyDataset(allDataPoints, dir, goodIds1, badIds1, goodIds2, badIds2, lowIds1, highIds1, lowIds2, highIds2);
 	}
 	
-	private static void generateDataset1() {
+	private static void generateDataset1(String dir) {
 		
 		//Generate gauss clusters
 		double[] mean1 = {0, 0};
@@ -142,12 +159,19 @@ public class DatasetGenerator {
 		List<Integer> badIds2 = twoLists.get(1);		
 		
 
-		//Plotting
-		plotGaussClusters(g1.getPoints(), g2.getPoints(), workDir + "/true_gauss.jpeg");
-//		plotGaussClustersGoodBad(g1.getPoints(), g2.getPoints(), workDir + "/badgood_gauss.jpeg", goodIds1, goodIds2, badIds1, badIds2);
-		plotDensityClusters(d1.getPoints(), d2.getPoints(), workDir + "/true_density.jpeg");
-//		plotDensityClustersLow(d1.getPoints(), d2.getPoints(), workDir + "/low_density.jpeg", lowIds1, lowIds2); 				
-			
+		//Plot clusters
+		if (Config.plotClusters) {
+			plotGaussClusters(g1.getPoints(), g2.getPoints(), workDir + "/" + dir + "/true_gauss");
+			plotDensityClusters(d1.getPoints(), d2.getPoints(), workDir + "/" + dir + "/true_density");
+		}
+		
+		
+		//Plot clusters with good/bad and high/low regions highlighted
+		if (Config.plotClustersHighlighted) {
+			plotGaussClustersGoodBad(g1.getPoints(), g2.getPoints(), workDir + "/" + dir + "/badgood_gauss", goodIds1, goodIds2, badIds1, badIds2);
+			plotDensityClustersLow(d1.getPoints(), d2.getPoints(), workDir + "/" + dir + "/low_density", lowIds1, lowIds2); 				
+		}
+		
 		
 		//Merge data points together
 		List<DataPoint> dataPoints1 = mergePoints(g1, d1, goodIds1, badIds1, lowIds1, highIds1, "1");
@@ -158,29 +182,37 @@ public class DatasetGenerator {
 		
 		
 		//Add noise
-		// 
-		// !!!!!!!!!!!!! Don't forget to set Config.numNoise Points !!!!!!!!!!!!
-		//
-//		List<DataPoint> noisePoints = getNoisePoints(Config.numNoisePoints, -400, 400, -800, 500, -600, 300, -100, 300);
-//		plotGaussClustersNoise(dataPoints1, dataPoints2, noisePoints, workDir + "/noise_gauss.jpeg");
-//		plotDensityClustersNoise(dataPoints1, dataPoints2, noisePoints, workDir + "/noise_gauss.jpeg");
-//		allDataPoints.addAll(noisePoints);
-		
-		
+		if (Config.numNoisePoints > 0) {
+			List<DataPoint> noisePoints = getNoisePoints(Config.numNoisePoints, -400, 400, -800, 500, -600, 300, -100, 300);
+			
+			if (Config.plotClusters) {
+				plotGaussClustersNoise(dataPoints1, dataPoints2, noisePoints, workDir + "/" + dir + "/noise_gauss");
+				plotDensityClustersNoise(dataPoints1, dataPoints2, noisePoints, workDir + "/" + dir + "/noise_density");
+			}
+			
+			allDataPoints.addAll(noisePoints);
+		}
 		
 		
 		//Export data points and true clustering
-		saveDataPoints(allDataPoints);
-		saveTrueClustering(allDataPoints);
+		saveDataPoints(allDataPoints, dir);
+		saveTrueClustering(allDataPoints, dir);
 		
 		
 		//Verify the merged dataset
+		if (Config.verfiyDataset)
+			verifyDataset(allDataPoints, dir, goodIds1, badIds1, goodIds2, badIds2, lowIds1, highIds1, lowIds2, highIds2);
+	}
+	
+	private static void verifyDataset(List<DataPoint> allDataPoints, String dir, List<Integer> goodIds1, List<Integer> badIds1, List<Integer> goodIds2, List<Integer> badIds2, List<Integer> lowIds1, List<Integer> highIds1, List<Integer> lowIds2, List<Integer> highIds2) {
+		
 		int sizeGoodLow1 = goodIds1.size() < lowIds1.size() ? goodIds1.size() : lowIds1.size();
 		int sizeBadHigh1 = badIds1.size() < highIds1.size() ? badIds1.size() : highIds1.size();
 		int sizeGoodLow2 = goodIds2.size() < lowIds2.size() ? goodIds2.size() : lowIds2.size();
 		int sizeBadHigh2 = badIds2.size() < highIds2.size() ? badIds2.size() : highIds2.size();
-//		plotVerifyGauss(allDataPoints, workDir + "/verify_gauss.jpeg", sizeGoodLow1, sizeBadHigh1, sizeGoodLow2, sizeBadHigh2);
-//		plotVerifyDensity(allDataPoints, workDir + "/verify_density.jpeg", sizeGoodLow1, sizeBadHigh1, sizeGoodLow2, sizeBadHigh2);
+		
+		plotVerifyGauss(allDataPoints, workDir + "/" + dir + "/verify_gauss", sizeGoodLow1, sizeBadHigh1, sizeGoodLow2, sizeBadHigh2);
+		plotVerifyDensity(allDataPoints, workDir + "/" + dir + "/verify_density", sizeGoodLow1, sizeBadHigh1, sizeGoodLow2, sizeBadHigh2);
 	}
 	
 	private static List<DataPoint> mergePoints(GaussCluster g, DensityCluster d, List<Integer> goodIdsGauss, List<Integer> badIdsGauss, List<Integer> lowIdsDensity, List<Integer> highIdsDensity, String clusterLabel) {
@@ -228,10 +260,10 @@ public class DatasetGenerator {
 	 * Exports data points to file.
 	 * @param dataPoints A list of data points.
 	 */
-	private static void saveDataPoints(List<DataPoint> dataPoints) {
+	private static void saveDataPoints(List<DataPoint> dataPoints, String dir) {
 		
 		try {
-			BufferedWriter writer = new BufferedWriter(new FileWriter(workDir + "/data.csv"));
+			BufferedWriter writer = new BufferedWriter(new FileWriter(workDir + "/"+ dir + "/data.csv"));
 			
 			for (DataPoint p : dataPoints) {
 				writer.write(p.toString());
@@ -250,10 +282,10 @@ public class DatasetGenerator {
 	 * @param filename A filename
 	 * @param clustering A clustering 
 	 */
-	private static void saveTrueClustering(List<DataPoint> dataPoints) {
+	private static void saveTrueClustering(List<DataPoint> dataPoints, String dir) {
 	
 		try {
-			BufferedWriter writer = new BufferedWriter(new FileWriter(workDir + "/true.csv"));
+			BufferedWriter writer = new BufferedWriter(new FileWriter(workDir + "/"+ dir + "/true.csv"));
 						
 			for (DataPoint p : dataPoints) 
 				writer.write(p.getClusterLabel() + " ");
@@ -264,144 +296,24 @@ public class DatasetGenerator {
 		}
 	}
 	
-	private static void plotGaussClustersGoodBad(List<double[]> points1, List<double[]> points2, String filename, List<Integer> goodIds1, List<Integer> goodIds2, List<Integer> badIds1, List<Integer> badIds2) {
+	private static List<DataPoint> getNoisePoints(int numNoisePoints, double f1, double t1, double f2, double t2, double f3, double t3, double f4, double t4) {
 		
-		XYSeriesCollection dataset = new XYSeriesCollection();
-		XYSeries series1 = new XYSeries("1");
-		XYSeries series2 = new XYSeries("2");
-		XYSeries bad = new XYSeries("bad");
-		XYSeries good = new XYSeries("good");
-		dataset.addSeries(good);
-		dataset.addSeries(bad);
-		dataset.addSeries(series1);
-		dataset.addSeries(series2);
+		List<DataPoint> noisePoints = new ArrayList<DataPoint>(numNoisePoints);
 		
-		for (int id = 0; id < points1.size(); id++) {
-			double[] p = points1.get(id);
-			if (goodIds1.contains(id))
-				good.add(p[0], p[1]);
-			else if (badIds1.contains(id))
-				bad.add(p[0], p[1]);
-			else
-				series1.add(p[0], p[1]);
+		for (int i = 0; i < numNoisePoints; i++) {
+			
+			double[] gauss = new double[2];
+			gauss[0] = f1 + (t1 - f1) * rand.nextDouble();
+			gauss[1] = f2 + (t2 - f2) * rand.nextDouble();
+			
+			double[] density = new double[2];
+			density[0] = f3 + (t3 - f3) * rand.nextDouble();
+			density[1] = f4 + (t4 - f4) * rand.nextDouble();
+			
+			noisePoints.add(new DataPoint(gauss, density, "3"));
 		}
 		
-		for (int id = 0; id < points2.size(); id++) {
-			double[] p = points2.get(id);
-			if (goodIds2.contains(id))
-				good.add(p[0], p[1]);
-			else if (badIds2.contains(id))
-				bad.add(p[0], p[1]);
-			else
-				series2.add(p[0], p[1]);
-		}
-		
-		JFreeChart chart = ChartFactory.createScatterPlot("", "", "", dataset, 
-				PlotOrientation.VERTICAL, true, false, false);
-		
-		try {
-			ChartUtilities.saveChartAsJPEG(new File(filename), chart, 660, 420);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		ChartFrame frame = new ChartFrame(filename, chart);
-		frame.pack();
-		frame.setVisible(true);
-	}
-	
-	private static void plotGaussClusters(List<double[]> dataPoints1, List<double[]> dataPoints2, String filename) {
-		
-		XYSeriesCollection dataset = new XYSeriesCollection();
-		XYSeries series1 = new XYSeries("1");
-		XYSeries series2 = new XYSeries("2");
-		dataset.addSeries(series1);
-		dataset.addSeries(series2);
-		
-		for (double[] p : dataPoints1)
-			series1.add(p[0], p[1]);
-		for (double[] p : dataPoints2)
-			series2.add(p[0], p[1]);
-		
-		JFreeChart chart = ChartFactory.createScatterPlot("", "", "", dataset, 
-				PlotOrientation.VERTICAL, true, false, false);
-		
-		try {
-			ChartUtilities.saveChartAsJPEG(new File(filename), chart, 660, 420);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		ChartFrame frame = new ChartFrame(filename, chart);
-		frame.pack();
-		frame.setVisible(true);
-	}
-	
-	private static void plotDensityClustersLow(List<double[]> points1, List<double[]> points2, String filename, List<Integer> lowIds1, List<Integer> lowIds2) {
-		
-		XYSeriesCollection datasetDensity = new XYSeriesCollection();
-		XYSeries low = new XYSeries("low");
-		XYSeries series1 = new XYSeries("1");
-		XYSeries series2 = new XYSeries("2");
-		datasetDensity.addSeries(low);
-		datasetDensity.addSeries(series1);
-		datasetDensity.addSeries(series2);
-		
-		for (int id = 0; id < points1.size(); id++) {
-			double[] p = points1.get(id);
-			if (lowIds1.contains(id))
-				low.add(p[0], p[1]);
-			else
-				series1.add(p[0], p[1]);
-		}
-		
-		for (int id = 0; id < points2.size(); id++) {
-			double[] p = points2.get(id);
-			if (lowIds2.contains(id))
-				low.add(p[0], p[1]);
-			else
-				series2.add(p[0], p[1]);
-		}
-		
-		JFreeChart chartDensity = ChartFactory.createScatterPlot("", "", "", datasetDensity, 
-				PlotOrientation.VERTICAL, true, false, false);
-		
-		try {
-			ChartUtilities.saveChartAsJPEG(new File(filename), chartDensity, 660, 420);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		ChartFrame frame = new ChartFrame(filename, chartDensity);
-		frame.pack();
-		frame.setVisible(true);
-	}
-	
-	private static void plotDensityClusters(List<double[]> dataPoints1, List<double[]> dataPoints2, String filename) {
-		
-		XYSeriesCollection dataset = new XYSeriesCollection();
-		XYSeries series1 = new XYSeries("1");
-		XYSeries series2 = new XYSeries("2");
-		dataset.addSeries(series1);
-		dataset.addSeries(series2);
-		
-		for (double[] p : dataPoints1)
-			series1.add(p[0], p[1]);
-		for (double[] p : dataPoints2)
-			series2.add(p[0], p[1]);
-		
-		JFreeChart chartDensity = ChartFactory.createScatterPlot("", "", "", dataset, 
-				PlotOrientation.VERTICAL, true, false, false);
-		
-		try {
-			ChartUtilities.saveChartAsJPEG(new File(filename), chartDensity, 660, 420);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		ChartFrame frame = new ChartFrame(filename, chartDensity);
-		frame.pack();
-		frame.setVisible(true);
+		return noisePoints;
 	}
 	
 	private static List<List<Integer>> getBadIdsGauss(double[] mean1, double[] mean2, double dev1, double dev2, GaussCluster g1, GaussCluster g2, double distFactor1, double distFactor2) {
@@ -451,6 +363,198 @@ public class DatasetGenerator {
 		return goodIds;
 	}
 	
+	private static void plotGaussClusters(List<double[]> dataPoints1, List<double[]> dataPoints2, String filename) {
+		
+		XYSeriesCollection dataset = new XYSeriesCollection();
+		XYSeries series1 = new XYSeries("1");
+		XYSeries series2 = new XYSeries("2");
+		dataset.addSeries(series1);
+		dataset.addSeries(series2);
+		
+		for (double[] p : dataPoints1)
+			series1.add(p[0], p[1]);
+		for (double[] p : dataPoints2)
+			series2.add(p[0], p[1]);
+		
+		JFreeChart chart = ChartFactory.createScatterPlot("Gauss Dimensions", "d1", "d2", dataset, PlotOrientation.VERTICAL, true, false, false);
+		XYPlot plot = (XYPlot)chart.getPlot();
+		plot.setDrawingSupplier(getCustomDrawingSupplier());
+		plot.setBackgroundPaint(new Color(210, 210, 210));
+	    plot.setOutlinePaint(Color.white);
+	    NumberAxis range = (NumberAxis)plot.getRangeAxis();
+        range.setTickUnit(new NumberTickUnit(100));
+        NumberAxis domain = (NumberAxis)plot.getDomainAxis();
+        domain.setTickUnit(new NumberTickUnit(100));
+        plot.setDomainGridlinesVisible(false);
+        plot.setRangeGridlinesVisible(false);
+        
+		try {
+			SVGGraphics2D svg = new SVGGraphics2D(600, 600);
+	        Rectangle area = new Rectangle(0, 0, 600, 600);
+	        chart.draw(svg, area);
+	        SVGUtils.writeToSVG(new File(filename + ".svg"), svg.getSVGElement());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		ChartFrame frame = new ChartFrame(filename, chart);
+		frame.pack();
+		frame.setBounds(0, 0, 600, 600);
+		frame.setVisible(Config.displayPlots);
+	}
+	
+	private static void plotDensityClusters(List<double[]> dataPoints1, List<double[]> dataPoints2, String filename) {
+		
+		XYSeriesCollection dataset = new XYSeriesCollection();
+		XYSeries series1 = new XYSeries("1");
+		XYSeries series2 = new XYSeries("2");
+		dataset.addSeries(series1);
+		dataset.addSeries(series2);
+		
+		for (double[] p : dataPoints1)
+			series1.add(p[0], p[1]);
+		for (double[] p : dataPoints2)
+			series2.add(p[0], p[1]);
+		
+		JFreeChart chart = ChartFactory.createScatterPlot("Density Dimensions", "d1", "d2", dataset, PlotOrientation.VERTICAL, true, false, false);
+		XYPlot plot = (XYPlot)chart.getPlot();
+		plot.setDrawingSupplier(getCustomDrawingSupplier());
+		plot.setBackgroundPaint(new Color(210, 210, 210));
+	    plot.setOutlinePaint(Color.white);
+	    NumberAxis range = (NumberAxis)plot.getRangeAxis();
+        range.setTickUnit(new NumberTickUnit(50));
+        NumberAxis domain = (NumberAxis)plot.getDomainAxis();
+        domain.setTickUnit(new NumberTickUnit(50));
+        plot.setDomainGridlinesVisible(false);
+        plot.setRangeGridlinesVisible(false);
+        
+		try {
+			SVGGraphics2D svg = new SVGGraphics2D(600, 600);
+	        Rectangle area = new Rectangle(0, 0, 600, 600);
+	        chart.draw(svg, area);
+	        SVGUtils.writeToSVG(new File(filename + ".svg"), svg.getSVGElement());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		ChartFrame frame = new ChartFrame(filename, chart);
+		frame.pack();
+		frame.setBounds(0, 0, 600, 600);
+		frame.setVisible(Config.displayPlots);
+	}
+	
+	private static void plotGaussClustersGoodBad(List<double[]> points1, List<double[]> points2, String filename, List<Integer> goodIds1, List<Integer> goodIds2, List<Integer> badIds1, List<Integer> badIds2) {
+		
+		XYSeriesCollection dataset = new XYSeriesCollection();
+		XYSeries series1 = new XYSeries("1");
+		XYSeries series2 = new XYSeries("2");
+		XYSeries bad = new XYSeries("bad");
+		XYSeries good = new XYSeries("good");
+		dataset.addSeries(good);
+		dataset.addSeries(bad);
+		dataset.addSeries(series1);
+		dataset.addSeries(series2);
+		
+		for (int id = 0; id < points1.size(); id++) {
+			double[] p = points1.get(id);
+			if (goodIds1.contains(id))
+				good.add(p[0], p[1]);
+			else if (badIds1.contains(id))
+				bad.add(p[0], p[1]);
+			else
+				series1.add(p[0], p[1]);
+		}
+		
+		for (int id = 0; id < points2.size(); id++) {
+			double[] p = points2.get(id);
+			if (goodIds2.contains(id))
+				good.add(p[0], p[1]);
+			else if (badIds2.contains(id))
+				bad.add(p[0], p[1]);
+			else
+				series2.add(p[0], p[1]);
+		}
+		
+		JFreeChart chart = ChartFactory.createScatterPlot("Gauss Highlighted", "d1", "d2", dataset, PlotOrientation.VERTICAL, true, false, false);
+		XYPlot plot = (XYPlot)chart.getPlot();
+		plot.setDrawingSupplier(getCustomDrawingSupplier());
+		plot.setBackgroundPaint(new Color(210, 210, 210));
+	    plot.setOutlinePaint(Color.white);
+	    NumberAxis range = (NumberAxis)plot.getRangeAxis();
+        range.setTickUnit(new NumberTickUnit(100));
+        NumberAxis domain = (NumberAxis)plot.getDomainAxis();
+        domain.setTickUnit(new NumberTickUnit(100));
+        plot.setDomainGridlinesVisible(false);
+        plot.setRangeGridlinesVisible(false);
+        
+		try {
+			SVGGraphics2D svg = new SVGGraphics2D(600, 600);
+	        Rectangle area = new Rectangle(0, 0, 600, 600);
+	        chart.draw(svg, area);
+	        SVGUtils.writeToSVG(new File(filename + ".svg"), svg.getSVGElement());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		ChartFrame frame = new ChartFrame(filename, chart);
+		frame.pack();
+		frame.setBounds(0, 0, 600, 600);
+		frame.setVisible(Config.displayPlots);
+	}
+	
+	private static void plotDensityClustersLow(List<double[]> points1, List<double[]> points2, String filename, List<Integer> lowIds1, List<Integer> lowIds2) {
+		
+		XYSeriesCollection dataset = new XYSeriesCollection();
+		XYSeries low = new XYSeries("low");
+		XYSeries series1 = new XYSeries("1");
+		XYSeries series2 = new XYSeries("2");
+		dataset.addSeries(low);
+		dataset.addSeries(series1);
+		dataset.addSeries(series2);
+		
+		for (int id = 0; id < points1.size(); id++) {
+			double[] p = points1.get(id);
+			if (lowIds1.contains(id))
+				low.add(p[0], p[1]);
+			else
+				series1.add(p[0], p[1]);
+		}
+		
+		for (int id = 0; id < points2.size(); id++) {
+			double[] p = points2.get(id);
+			if (lowIds2.contains(id))
+				low.add(p[0], p[1]);
+			else
+				series2.add(p[0], p[1]);
+		}
+		
+		JFreeChart chart = ChartFactory.createScatterPlot("Density Highlighted", "d1", "d2", dataset, PlotOrientation.VERTICAL, true, false, false);
+		XYPlot plot = (XYPlot)chart.getPlot();
+		plot.setDrawingSupplier(getCustomDrawingSupplier());
+		plot.setBackgroundPaint(new Color(210, 210, 210));
+	    plot.setOutlinePaint(Color.white);
+	    NumberAxis range = (NumberAxis)plot.getRangeAxis();
+        range.setTickUnit(new NumberTickUnit(50));
+        NumberAxis domain = (NumberAxis)plot.getDomainAxis();
+        domain.setTickUnit(new NumberTickUnit(50));
+        plot.setDomainGridlinesVisible(false);
+        plot.setRangeGridlinesVisible(false);
+        
+		try {
+			SVGGraphics2D svg = new SVGGraphics2D(600, 600);
+	        Rectangle area = new Rectangle(0, 0, 600, 600);
+	        chart.draw(svg, area);
+	        SVGUtils.writeToSVG(new File(filename + ".svg"), svg.getSVGElement());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		ChartFrame frame = new ChartFrame(filename, chart);
+		frame.pack();
+		frame.setBounds(0, 0, 600, 600);
+		frame.setVisible(Config.displayPlots);
+	}
+	
 	private static void plotVerifyGauss(List<DataPoint> dataPoints, String filename, int sizeGoodLow1, int sizeBadHigh1, int sizeGoodLow2, int sizeBadHigh2) {
 		
 		XYSeriesCollection dataset = new XYSeriesCollection();
@@ -473,18 +577,31 @@ public class DatasetGenerator {
 			badhigh2.add(dataPoints.get(numPointsCluster + i + sizeGoodLow2).getGaussFeatures()[0], dataPoints.get(numPointsCluster + i + sizeGoodLow2).getGaussFeatures()[1]);	
 		dataset.addSeries(badhigh2);
 		
-		JFreeChart chart = ChartFactory.createScatterPlot("", "", "", dataset, 
-				PlotOrientation.VERTICAL, true, false, false);
-		
+		JFreeChart chart = ChartFactory.createScatterPlot("Gauss Verification", "d1", "d2", dataset, PlotOrientation.VERTICAL, true, false, false);
+		XYPlot plot = (XYPlot)chart.getPlot();
+		plot.setDrawingSupplier(getCustomDrawingSupplier());
+		plot.setBackgroundPaint(new Color(210, 210, 210));
+	    plot.setOutlinePaint(Color.white);
+	    NumberAxis range = (NumberAxis)plot.getRangeAxis();
+        range.setTickUnit(new NumberTickUnit(50));
+        NumberAxis domain = (NumberAxis)plot.getDomainAxis();
+        domain.setTickUnit(new NumberTickUnit(50));
+        plot.setDomainGridlinesVisible(false);
+        plot.setRangeGridlinesVisible(false);
+        
 		try {
-			ChartUtilities.saveChartAsJPEG(new File(filename), chart, 660, 420);
+			SVGGraphics2D svg = new SVGGraphics2D(600, 600);
+	        Rectangle area = new Rectangle(0, 0, 600, 600);
+	        chart.draw(svg, area);
+	        SVGUtils.writeToSVG(new File(filename + ".svg"), svg.getSVGElement());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		
 		ChartFrame frame = new ChartFrame(filename, chart);
 		frame.pack();
-		frame.setVisible(true);
+		frame.setBounds(0, 0, 600, 600);
+		frame.setVisible(Config.displayPlots);
 		
 	}
 	
@@ -510,7 +627,6 @@ public class DatasetGenerator {
 			badhigh2.add(dataPoints.get(numPointsCluster + i + sizeGoodLow2).getDensityFeatures()[0], dataPoints.get(numPointsCluster + i + sizeGoodLow2).getDensityFeatures()[1]);	
 		dataset.addSeries(badhigh2);
 		
-		//Keep here because of dumb auto-scaling of JFreeChart
 		for (int i = 1; i <= numClusters; i++) {
 			XYSeries series = new XYSeries(""+ i);
 			for (DataPoint dataPoint : dataPoints)
@@ -519,39 +635,32 @@ public class DatasetGenerator {
 			dataset.addSeries(series);
 		}
 		
-		JFreeChart chart = ChartFactory.createScatterPlot("", "", "", dataset, 
-				PlotOrientation.VERTICAL, true, false, false);
-		
+		JFreeChart chart = ChartFactory.createScatterPlot("Density Verification", "d1", "d2", dataset, PlotOrientation.VERTICAL, true, false, false);
+		XYPlot plot = (XYPlot)chart.getPlot();
+		plot.setDrawingSupplier(getCustomDrawingSupplier());
+		plot.setBackgroundPaint(new Color(210, 210, 210));
+	    plot.setOutlinePaint(Color.white);
+	    NumberAxis range = (NumberAxis)plot.getRangeAxis();
+        range.setTickUnit(new NumberTickUnit(50));
+        NumberAxis domain = (NumberAxis)plot.getDomainAxis();
+        domain.setTickUnit(new NumberTickUnit(50));
+        plot.setDomainGridlinesVisible(false);
+        plot.setRangeGridlinesVisible(false);
+        
 		try {
-			ChartUtilities.saveChartAsJPEG(new File(filename), chart, 660, 420);
+			SVGGraphics2D svg = new SVGGraphics2D(600, 600);
+	        Rectangle area = new Rectangle(0, 0, 600, 600);
+	        chart.draw(svg, area);
+	        SVGUtils.writeToSVG(new File(filename + ".svg"), svg.getSVGElement());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		
 		ChartFrame frame = new ChartFrame(filename, chart);
 		frame.pack();
-		frame.setVisible(true);
+		frame.setBounds(0, 0, 600, 600);
+		frame.setVisible(Config.displayPlots);
 		
-	}
-	
-	private static List<DataPoint> getNoisePoints(int numNoisePoints, double f1, double t1, double f2, double t2, double f3, double t3, double f4, double t4) {
-		
-		List<DataPoint> noisePoints = new ArrayList<DataPoint>(numNoisePoints);
-		
-		for (int i = 0; i < numNoisePoints; i++) {
-			
-			double[] gauss = new double[2];
-			gauss[0] = f1 + (t1 - f1) * rand.nextDouble();
-			gauss[1] = f2 + (t2 - f2) * rand.nextDouble();
-			
-			double[] density = new double[2];
-			density[0] = f3 + (t3 - f3) * rand.nextDouble();
-			density[1] = f4 + (t4 - f4) * rand.nextDouble();
-			
-			noisePoints.add(new DataPoint(gauss, density, "3"));
-		}
-		
-		return noisePoints;
 	}
 	
 	private static void plotGaussClustersNoise(List<DataPoint> dataPoints1, List<DataPoint> dataPoints2, List<DataPoint> noisePoints, String filename) {
@@ -559,7 +668,7 @@ public class DatasetGenerator {
 		XYSeriesCollection dataset = new XYSeriesCollection();
 		XYSeries series1 = new XYSeries("1");
 		XYSeries series2 = new XYSeries("2");
-		XYSeries series0 = new XYSeries("0");
+		XYSeries series0 = new XYSeries("Noise");
 		dataset.addSeries(series1);
 		dataset.addSeries(series2);
 		dataset.addSeries(series0);
@@ -571,18 +680,31 @@ public class DatasetGenerator {
 		for (DataPoint p : noisePoints)
 			series0.add(p.getGaussFeatures()[0], p.getGaussFeatures()[1]);
 		
-		JFreeChart chart = ChartFactory.createScatterPlot("", "", "", dataset, 
-				PlotOrientation.VERTICAL, true, false, false);
-		
+		JFreeChart chart = ChartFactory.createScatterPlot("Gauss Dimensions with Noise", "d1", "d2", dataset, PlotOrientation.VERTICAL, true, false, false);
+		XYPlot plot = (XYPlot)chart.getPlot();
+		plot.setDrawingSupplier(getCustomDrawingSupplier());
+		plot.setBackgroundPaint(new Color(210, 210, 210));
+	    plot.setOutlinePaint(Color.white);
+	    NumberAxis range = (NumberAxis)plot.getRangeAxis();
+        range.setTickUnit(new NumberTickUnit(200));
+        NumberAxis domain = (NumberAxis)plot.getDomainAxis();
+        domain.setTickUnit(new NumberTickUnit(200));
+        plot.setDomainGridlinesVisible(false);
+        plot.setRangeGridlinesVisible(false);
+        
 		try {
-			ChartUtilities.saveChartAsJPEG(new File(filename), chart, 660, 420);
+			SVGGraphics2D svg = new SVGGraphics2D(600, 600);
+	        Rectangle area = new Rectangle(0, 0, 600, 600);
+	        chart.draw(svg, area);
+	        SVGUtils.writeToSVG(new File(filename + ".svg"), svg.getSVGElement());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		
 		ChartFrame frame = new ChartFrame(filename, chart);
 		frame.pack();
-		frame.setVisible(true);
+		frame.setBounds(0, 0, 600, 600);
+		frame.setVisible(Config.displayPlots);
 	}
 	
 	private static void plotDensityClustersNoise(List<DataPoint> dataPoints1, List<DataPoint> dataPoints2, List<DataPoint> noisePoints, String filename) {
@@ -590,7 +712,7 @@ public class DatasetGenerator {
 		XYSeriesCollection dataset = new XYSeriesCollection();
 		XYSeries series1 = new XYSeries("1");
 		XYSeries series2 = new XYSeries("2");
-		XYSeries series0 = new XYSeries("0");
+		XYSeries series0 = new XYSeries("Noise");
 		dataset.addSeries(series1);
 		dataset.addSeries(series2);
 		dataset.addSeries(series0);
@@ -602,17 +724,52 @@ public class DatasetGenerator {
 		for (DataPoint p : noisePoints)
 			series0.add(p.getDensityFeatures()[0], p.getDensityFeatures()[1]);
 		
-		JFreeChart chartDensity = ChartFactory.createScatterPlot("", "", "", dataset, 
-				PlotOrientation.VERTICAL, true, false, false);
-		
+		JFreeChart chart = ChartFactory.createScatterPlot("Density Dimensions with Noise", "d1", "d2", dataset, PlotOrientation.VERTICAL, true, false, false);
+		XYPlot plot = (XYPlot)chart.getPlot();
+		plot.setDrawingSupplier(getCustomDrawingSupplier());
+		plot.setBackgroundPaint(new Color(210, 210, 210));
+	    plot.setOutlinePaint(Color.white);
+	    NumberAxis range = (NumberAxis)plot.getRangeAxis();
+        range.setTickUnit(new NumberTickUnit(200));
+        NumberAxis domain = (NumberAxis)plot.getDomainAxis();
+        domain.setTickUnit(new NumberTickUnit(200));
+        plot.setDomainGridlinesVisible(false);
+        plot.setRangeGridlinesVisible(false);
+        
 		try {
-			ChartUtilities.saveChartAsJPEG(new File(filename), chartDensity, 660, 420);
+			SVGGraphics2D svg = new SVGGraphics2D(600, 600);
+	        Rectangle area = new Rectangle(0, 0, 600, 600);
+	        chart.draw(svg, area);
+	        SVGUtils.writeToSVG(new File(filename + ".svg"), svg.getSVGElement());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		
-		ChartFrame frame = new ChartFrame(filename, chartDensity);
+		ChartFrame frame = new ChartFrame(filename, chart);
 		frame.pack();
-		frame.setVisible(true);
+		frame.setBounds(0, 0, 600, 600);
+		frame.setVisible(Config.displayPlots);
+	}
+	
+	private static DefaultDrawingSupplier getCustomDrawingSupplier() {
+		return new DefaultDrawingSupplier(
+				new Paint[] { 
+						new Color(31,120,180),
+						new Color(227,26,28),
+						new Color(51,160,44),
+						new Color(106,61,154),
+						new Color(177,89,40),
+						new Color(255,127,0),
+						new Color(178,223,138),
+						new Color(251,154,153),
+						new Color(166,206,227),
+						new Color(253,191,111),
+						new Color(202,178,214),
+						new Color(255,255,153),
+				},
+				DefaultDrawingSupplier.DEFAULT_OUTLINE_PAINT_SEQUENCE,
+				DefaultDrawingSupplier.DEFAULT_STROKE_SEQUENCE,
+				DefaultDrawingSupplier.DEFAULT_OUTLINE_STROKE_SEQUENCE,
+				DefaultDrawingSupplier.DEFAULT_SHAPE_SEQUENCE);
 	}
 }
