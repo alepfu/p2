@@ -1,5 +1,12 @@
 package p2.clustering;
 
+/**
+ * Copyright (c) 2017 Alexander Pfundner
+ * 
+ * Integration of Density-based and Partitioning-based Clustering Methods
+ * 
+ */
+
 import java.awt.Color;
 import java.awt.Paint;
 import java.awt.Rectangle;
@@ -47,6 +54,10 @@ import p2.util.Config;
 import p2.util.DataLoaderUtil;
 import p2.util.StatisticsUtil;
 
+/**
+ * Processes generated datasets with an integrative workflow of KMeans and DBSCAN.
+ * 
+ */
 public class IntegratedRunner {
 	
 	/**
@@ -70,11 +81,10 @@ public class IntegratedRunner {
 	private double[][] dataDensity;
 	
 	/**
-	 * Working directory
+	 * Main method, processing dataset 1 and 2.
+	 * Does not take arguments, parameters are set via class Config.
+	 * 
 	 */
-	private final static String workDir = Config.workDir;
-	
-	
 	public static void main(String[] args) {
 	
 		System.out.println("Processing dataset 1 ...");
@@ -86,22 +96,27 @@ public class IntegratedRunner {
 		System.out.println("\nFinished.");
 	}
 	
+	/**
+	 * Runs the integrative workflow for a dataset.
+	 * 
+	 * @param dir The directory wher the data is.
+	 * @param epsilonFull DBSCAN epsilon parameter for the full feature space.
+	 * @param epsilonDensity DBSCAN epsilon parameter for the density feature space.
+	 * @param epsilonDummy DBSCAN epsilon parameter for the extended feature space.
+	 */
 	public static void runWorkflow(String dir, double epsilonFull, double epsilonDensity, double epsilonDummy) {
 		
-		IntegratedRunner runner = new IntegratedRunner(workDir + "/" + dir +  "/data.csv");
+		IntegratedRunner runner = new IntegratedRunner(Config.workDir + "/" + dir +  "/data.csv");
 		
 		int minPts = 4;
 		
 		//runner.estimateDBSCANEpsilon(runner.data, minPts, "full");
 		//runner.estimateDBSCANEpsilon(runner.dataDensity, minPts, "density");
 		
-		/**
-		 * 
-		 * 
-		 * Initial performance analysis for full and partial data
-		 * =======================================================
-		 * 
-		 */
+		// 
+		// Initial performance analysis for full and partial data
+		// ------------------------------------------------------------
+		//
 		
 		//Full data
 		ExtKMeansClustering kmeansFull = runner.runKMeans(runner.data, "kmeans_full", dir); 		
@@ -115,18 +130,16 @@ public class IntegratedRunner {
 		
 		//Plot results
 		if (Config.plotClusters) {
-			plotKMeansClustering(kmeansGauss.getClustering(), runner.dataGauss, kmeansGauss.getIds(), workDir + "/" + dir + "/kmeans_gauss");
-			plotDBSCANClustering(dbscanDensity.getClustering(), runner.dataDensity, dbscanDensity.getIds(), workDir + "/" + dir + "/dbscan_density");
+			plotKMeansClustering(kmeansGauss.getClustering(), runner.dataGauss, kmeansGauss.getIds(), Config.workDir + "/" + dir + "/kmeans_gauss");
+			plotDBSCANClustering(dbscanDensity.getClustering(), runner.dataDensity, dbscanDensity.getIds(), Config.workDir + "/" + dir + "/dbscan_density");
 		}
+
 		
-		/**
-		 * 
-		 * 
-		 * Running DBSCAN and KMeans alternately
-		 * =====================================
-		 * 
-		 */
-		
+		//
+		// Running DBSCAN and KMeans alternately
+		// --------------------------------------------
+		//
+		 
 		ExtKMeansClustering kmeans1 = runner.runKMeans(runner.dataGauss, "kmeans1", dir);
 		//runner.estimateDBSCANEpsilon(runner.getExtData(runner.dataDensity, kmeans1.getDummy()), minPts, "dummy1");
 		ExtDBSCANClustering dbscan1 = runner.runDBSCAN(runner.getExtData(runner.dataDensity, kmeans1.getDummy()), minPts, epsilonDummy, "dbscan1", dir);
@@ -173,6 +186,8 @@ public class IntegratedRunner {
 	
 	/**
 	 * Runs KMeans clustering using data extended by DBSCAN cluster labels in dummy encoding.
+	 * @param iterLabel The name of the iteration
+	 * @param dir The output directory.
 	 * @return A clustering result with additional dummy encoding.
 	 */
 	private ExtKMeansClustering runKMeans(double[][] data, String iterLabel, String dir) {
@@ -206,7 +221,7 @@ public class IntegratedRunner {
 		}
 		
 		//Save clustering to file
-		saveClusteringToFile(workDir + "/" + dir + "/" + iterLabel + ".csv", clu, ids);
+		saveClusteringToFile(Config.workDir + "/" + dir + "/" + iterLabel + ".csv", clu, ids);
 		
 		return new ExtKMeansClustering(clu, dummy, ids);
 	}
@@ -216,6 +231,8 @@ public class IntegratedRunner {
 	 * @param data The data to process.
 	 * @param minPts The minPts parameter of the DBSCAN algorithm.
 	 * @param epsilon The epsilon parameter of the DBSCAN algorithm.
+	 * @param iterLabel The name of the iteration
+	 * @param dir The output directory.
 	 * @return A clustering result with additional dummy encoding.
 	 */
 	private ExtDBSCANClustering runDBSCAN(double[][] data, int minPts, double epsilon, String iterLabel, String dir) {
@@ -258,7 +275,7 @@ public class IntegratedRunner {
 		}
 		
 		//Save clustering to file
-		saveClusteringToFile(workDir + "/" + dir + "/" + iterLabel + ".csv", clu, ids);
+		saveClusteringToFile(Config.workDir + "/" + dir + "/" + iterLabel + ".csv", clu, ids);
 		
 		return new ExtDBSCANClustering(clu, dummy, ids);
 	}
@@ -268,7 +285,8 @@ public class IntegratedRunner {
 	 * Use for evaluation with Matlab implementation of Adjusted Mutual Information.
 	 * E.g. "1 1 1 2 2" would say objects 1-3 are in cluster 1 and objects 4-5 are in cluster 2.
 	 * @param filename The file to write to.
-	 * @param clustering The clustering to export to the file.
+	 * @param clu The clustering to export to the file.
+	 * @param ids The ids of the loaded dataset.
 	 */
 	private void saveClusteringToFile(String filename, Clustering<? extends Model> clu, DBIDRange ids) {
 		
@@ -296,6 +314,9 @@ public class IntegratedRunner {
 	
 	/**
 	 * Concats data with the normalized dummy encoding.
+	 * 
+	 * @param data The data as a double array.
+	 * @param dummy The dummy encoded cluster labels.
 	 * @return Concat between data and dummy encoding.
 	 */
 	public double[][] getExtData(double[][] data, double[][] dummy) {
@@ -326,22 +347,16 @@ public class IntegratedRunner {
 			for (int col = numColsData; col < numColsConcat; col++)
 				extData[row][col] = dummy[row][col - numColsData];		
 		
-		//Log the result
-		/*NumberFormat nf = NumberFormat.getInstance();
-		nf.setMinimumFractionDigits(2);
-		nf.setMaximumFractionDigits(2);
-		StringBuilder log = new StringBuilder("\nExtended data:\n");
-		for (int row = 0; row < 3; row++) {
-			for (int col = 0; col < numColsConcat; col++)
-				log.append(nf.format(extData[row][col]) + " ");
-			log.append("\n");
-		}
-		log.append("...\n");
-		System.out.println(log);*/
-		
 		return extData;
 	}
 	
+	/**
+	 * Plots clustering obtained by KMeans.
+	 * @param clustering
+	 * @param plotData
+	 * @param ids
+	 * @param filename
+	 */
 	private static void plotKMeansClustering(Clustering<KMeansModel> clustering, double[][] plotData, DBIDRange ids, String filename) {
 		
 		XYSeriesCollection collection = new XYSeriesCollection();
@@ -383,6 +398,13 @@ public class IntegratedRunner {
 		frame.setVisible(Config.displayPlots);
 	}
 	
+	/**
+	 * Plots clustering obtained by DBSCAN.
+	 * @param clustering
+	 * @param plotData
+	 * @param ids
+	 * @param filename
+	 */
 	private static void plotDBSCANClustering(Clustering<Model> clustering, double[][] plotData, DBIDRange ids, String filename) {
 		
 		XYSeriesCollection collection = new XYSeriesCollection();
@@ -424,6 +446,12 @@ public class IntegratedRunner {
 		frame.setVisible(Config.displayPlots);
 	}
 	
+	/**
+	 * Plots the KNN-distances for estimating DBSCAN epsilon parameter.
+	 * @param data
+	 * @param minPts
+	 * @param label
+	 */
 	public void estimateDBSCANEpsilon(double[][] data, int minPts, String label) {
 		
 		ArrayAdapterDatabaseConnection conn = new ArrayAdapterDatabaseConnection(data);
@@ -456,6 +484,10 @@ public class IntegratedRunner {
 
 	}
 	
+	/** 
+	 * Color palette for plotting.
+	 *
+	 */
 	private static DefaultDrawingSupplier getCustomDrawingSupplier() {
 		return new DefaultDrawingSupplier(
 				new Paint[] { 

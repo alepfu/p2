@@ -1,7 +1,18 @@
 package p2.datagenerator;
 
+/**
+ * Copyright (c) 2017 Alexander Pfundner
+ * 
+ * Integration of Density-based and Partitioning-based Clustering Methods
+ * 
+ */
+
 import java.util.Arrays;
 
+/**
+ * Data point class with access to gauss- and density-distributed features.
+ *
+ */
 public class DataPoint {
 	
 	private double[] gaussFeatures;

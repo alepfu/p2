@@ -1,10 +1,21 @@
 package p2.clustering;
 
+/**
+ * Copyright (c) 2017 Alexander Pfundner
+ * 
+ * Integration of Density-based and Partitioning-based Clustering Methods
+ * 
+ */
+
 import de.lmu.ifi.dbs.elki.data.Cluster;
 import de.lmu.ifi.dbs.elki.data.Clustering;
 import de.lmu.ifi.dbs.elki.data.model.Model;
 import de.lmu.ifi.dbs.elki.database.ids.DBIDRange;
 
+/**
+ * DBSCAN clustering extended with dummy encoded cluster labels.
+ *
+ */
 public class ExtDBSCANClustering {
 	
 	private Clustering<Model> clustering;

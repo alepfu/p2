@@ -1,5 +1,12 @@
 package p2.util;
 
+/**
+ * Copyright (c) 2017 Alexander Pfundner
+ * 
+ * Integration of Density-based and Partitioning-based Clustering Methods
+ * 
+ */
+
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 public class StatisticsUtil {

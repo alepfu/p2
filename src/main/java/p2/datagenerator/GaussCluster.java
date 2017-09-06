@@ -1,9 +1,20 @@
 package p2.datagenerator;
 
+/**
+ * Copyright (c) 2017 Alexander Pfundner
+ * 
+ * Integration of Density-based and Partitioning-based Clustering Methods
+ * 
+ */
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * Gauss distributed cluster.
+ *
+ */
 public class GaussCluster {
 
 	private int numPoints;

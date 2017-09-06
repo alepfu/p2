@@ -1,54 +1,76 @@
 package p2.util;
 
+/**
+ * Copyright (c) 2017 Alexander Pfundner
+ * 
+ * Integration of Density-based and Partitioning-based Clustering Methods
+ * 
+ */
+
 import java.awt.Color;
 import java.awt.Paint;
 
 import org.jfree.chart.plot.DefaultDrawingSupplier;
 
+/**
+ * Holds parameters used by the classes DatasetGenerator and IntegratedRunner.
+ *
+ */
 public class Config {
 
+	/**
+	 * Number of clusters to be generated.
+	 */
 	public static int numClusters = 2;
 	
+	/**
+	 * Number of generated points per cluster. 
+	 */
 	public static int numPointsCluster = 1000;
 	
-	public static int numNoisePoints = 0;
+	/**
+	 * Number of noise points.
+	 */
+	public static int numNoisePoints = 100;
 	
+	/**
+	 * Total number of points.
+	 */
 	public static int numPoints = (numClusters * numPointsCluster) + numNoisePoints;
 	
+	/**
+	 * Number of features each cluster type has.
+	 */
 	public static int numDimPerType = 2;
 	
+	/**
+	 * Seed for the random number generator.
+	 */
 	public static long seed = 7;
 	
+	/**
+	 * Working directory, without trailing slash.
+	 */
 	public static String workDir = "/home/alepfu/Desktop/P2";
 	
+	/**
+	 * Flag that enables the generation of verfication plots.
+	 */
 	public static boolean verfiyDataset = false;
-	
+
+	/**
+	 * Flag that enables the generation of cluster plots.
+	 */
 	public static boolean plotClusters = true;
 	
+	/**
+	 * Flag that enables the generation of plots that highlight the points that are easy or hard to cluster.
+	 */
 	public static boolean plotClustersHighlighted = false;
 	
-	public static boolean displayPlots = true;
+	/**
+	 * Flag that enables the showing of plots directly.
+	 */
+	public static boolean displayPlots = false;
 	
-	
-	
-	
-	public static DefaultDrawingSupplier customDrawingSupplier = new DefaultDrawingSupplier(
-			new Paint[] { 
-					new Color(31,120,180),
-					new Color(227,26,28),
-					new Color(51,160,44),
-					new Color(106,61,154),
-					new Color(177,89,40),
-					new Color(255,127,0),
-					new Color(178,223,138),
-					new Color(251,154,153),
-					new Color(166,206,227),
-					new Color(253,191,111),
-					new Color(202,178,214),
-					new Color(255,255,153),
-			},
-			DefaultDrawingSupplier.DEFAULT_OUTLINE_PAINT_SEQUENCE,
-			DefaultDrawingSupplier.DEFAULT_STROKE_SEQUENCE,
-			DefaultDrawingSupplier.DEFAULT_OUTLINE_STROKE_SEQUENCE,
-			DefaultDrawingSupplier.DEFAULT_SHAPE_SEQUENCE);
 }

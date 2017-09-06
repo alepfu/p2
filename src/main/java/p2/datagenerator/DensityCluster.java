@@ -1,19 +1,31 @@
 package p2.datagenerator;
 
+/**
+ * Copyright (c) 2017 Alexander Pfundner
+ * 
+ * Integration of Density-based and Partitioning-based Clustering Methods
+ * 
+ */
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * Density distributed cluster, with different shapes (arcs and boxes).
+ *
+ */
 public class DensityCluster {
 	
 	public final static String TYPE_ARC_UP_1 = "arcup1";
+	
 	public final static String TYPE_ARC_DOWN_1 = "arcdown1";
 	
 	public final static String TYPE_ARC_UP_2 = "arcup2";
+	
 	public final static String TYPE_ARC_DOWN_2 = "arcdown2";
 	
 	public final static String TYPE_BOX = "box";
-	
 	
 	public final static double SCALING_ARC = 100;
 	
