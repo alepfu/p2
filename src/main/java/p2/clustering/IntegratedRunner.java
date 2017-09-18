@@ -130,8 +130,8 @@ public class IntegratedRunner {
 		
 		//Plot results
 		if (Config.plotClusters) {
-			plotKMeansClustering(kmeansGauss.getClustering(), runner.dataGauss, kmeansGauss.getIds(), Config.workDir + "/" + dir + "/kmeans_gauss");
-			plotDBSCANClustering(dbscanDensity.getClustering(), runner.dataDensity, dbscanDensity.getIds(), Config.workDir + "/" + dir + "/dbscan_density");
+			plotKMeansClustering(kmeansGauss.getClustering(), runner.dataGauss, kmeansGauss.getIds(), Config.workDir + "/" + dir + "/kmeans_gauss", "k-Means on Gauss Dimensions");
+			plotDBSCANClustering(dbscanDensity.getClustering(), runner.dataDensity, dbscanDensity.getIds(), Config.workDir + "/" + dir + "/dbscan_density", "DBSCAN on Density Dimensions");
 		}
 
 		
@@ -141,35 +141,54 @@ public class IntegratedRunner {
 		//
 		 
 		ExtKMeansClustering kmeans1 = runner.runKMeans(runner.dataGauss, "kmeans1", dir);
-		//runner.estimateDBSCANEpsilon(runner.getExtData(runner.dataDensity, kmeans1.getDummy()), minPts, "dummy1");
+		plotKMeansClustering(kmeans1.getClustering(), runner.dataGauss, kmeans1.getIds(), Config.workDir + "/" + dir + "/kmeans1", "kmeans1");
 		ExtDBSCANClustering dbscan1 = runner.runDBSCAN(runner.getExtData(runner.dataDensity, kmeans1.getDummy()), minPts, epsilonDummy, "dbscan1", dir);
+		plotDBSCANClustering(dbscan1.getClustering(), runner.dataDensity, dbscan1.getIds(), Config.workDir + "/" + dir + "/dbscan1", "dbscan1");		
 		
 		ExtKMeansClustering kmeans2 = runner.runKMeans(runner.getExtData(runner.dataGauss, dbscan1.getDummy()), "kmeans2", dir);
+		plotKMeansClustering(kmeans2.getClustering(), runner.dataGauss, kmeans2.getIds(), Config.workDir + "/" + dir + "/kmeans2", "kmeans2");
 		ExtDBSCANClustering dbscan2 = runner.runDBSCAN(runner.getExtData(runner.dataDensity, kmeans2.getDummy()), minPts, epsilonDummy, "dbscan2", dir);
+		plotDBSCANClustering(dbscan2.getClustering(), runner.dataDensity, dbscan2.getIds(), Config.workDir + "/" + dir + "/dbscan2", "dbscan2");
 		
 		ExtKMeansClustering kmeans3 = runner.runKMeans(runner.getExtData(runner.dataGauss, dbscan2.getDummy()), "kmeans3", dir);
+		plotKMeansClustering(kmeans3.getClustering(), runner.dataGauss, kmeans3.getIds(), Config.workDir + "/" + dir + "/kmeans3", "kmeans3");
 		ExtDBSCANClustering dbscan3 = runner.runDBSCAN(runner.getExtData(runner.dataDensity, kmeans3.getDummy()), minPts, epsilonDummy, "dbscan3", dir);
+		plotDBSCANClustering(dbscan3.getClustering(), runner.dataDensity, dbscan3.getIds(), Config.workDir + "/" + dir + "/dbscan3", "dbscan3");
 		
 		ExtKMeansClustering kmeans4 = runner.runKMeans(runner.getExtData(runner.dataGauss, dbscan3.getDummy()), "kmeans4", dir);
+		plotKMeansClustering(kmeans4.getClustering(), runner.dataGauss, kmeans4.getIds(), Config.workDir + "/" + dir + "/kmeans4", "kmeans4");
 		ExtDBSCANClustering dbscan4 = runner.runDBSCAN(runner.getExtData(runner.dataDensity, kmeans4.getDummy()), minPts, epsilonDummy, "dbscan4", dir);
+		plotDBSCANClustering(dbscan4.getClustering(), runner.dataDensity, dbscan4.getIds(), Config.workDir + "/" + dir + "/dbscan4", "dbscan4");
 		
 		ExtKMeansClustering kmeans5 = runner.runKMeans(runner.getExtData(runner.dataGauss, dbscan4.getDummy()), "kmeans5", dir);
+		plotKMeansClustering(kmeans5.getClustering(), runner.dataGauss, kmeans5.getIds(), Config.workDir + "/" + dir + "/kmeans5", "kmeans5");
 		ExtDBSCANClustering dbscan5 = runner.runDBSCAN(runner.getExtData(runner.dataDensity, kmeans5.getDummy()), minPts, epsilonDummy, "dbscan5", dir);
+		plotDBSCANClustering(dbscan5.getClustering(), runner.dataDensity, dbscan5.getIds(), Config.workDir + "/" + dir + "/dbscan5", "dbscan5");
 		
 		ExtKMeansClustering kmeans6 = runner.runKMeans(runner.getExtData(runner.dataGauss, dbscan5.getDummy()), "kmeans6", dir);
+		plotKMeansClustering(kmeans6.getClustering(), runner.dataGauss, kmeans6.getIds(), Config.workDir + "/" + dir + "/kmeans6", "kmeans6");
 		ExtDBSCANClustering dbscan6 = runner.runDBSCAN(runner.getExtData(runner.dataDensity, kmeans6.getDummy()), minPts, epsilonDummy, "dbscan6", dir);
+		plotDBSCANClustering(dbscan6.getClustering(), runner.dataDensity, dbscan6.getIds(), Config.workDir + "/" + dir + "/dbscan6", "dbscan6");
 		
 		ExtKMeansClustering kmeans7 = runner.runKMeans(runner.getExtData(runner.dataGauss, dbscan6.getDummy()), "kmeans7", dir);
+		plotKMeansClustering(kmeans7.getClustering(), runner.dataGauss, kmeans7.getIds(), Config.workDir + "/" + dir + "/kmeans7", "kmeans7");
 		ExtDBSCANClustering dbscan7 = runner.runDBSCAN(runner.getExtData(runner.dataDensity, kmeans7.getDummy()), minPts, epsilonDummy, "dbscan7", dir);
+		plotDBSCANClustering(dbscan7.getClustering(), runner.dataDensity, dbscan7.getIds(), Config.workDir + "/" + dir + "/dbscan7", "dbscan7");
 		
 		ExtKMeansClustering kmeans8 = runner.runKMeans(runner.getExtData(runner.dataGauss, dbscan7.getDummy()), "kmeans8", dir);
+		plotKMeansClustering(kmeans8.getClustering(), runner.dataGauss, kmeans8.getIds(), Config.workDir + "/" + dir + "/kmeans8", "kmeans8");
 		ExtDBSCANClustering dbscan8 = runner.runDBSCAN(runner.getExtData(runner.dataDensity, kmeans8.getDummy()), minPts, epsilonDummy, "dbscan8", dir);
+		plotDBSCANClustering(dbscan8.getClustering(), runner.dataDensity, dbscan8.getIds(), Config.workDir + "/" + dir + "/dbscan8", "dbscan8");
 		
 		ExtKMeansClustering kmeans9 = runner.runKMeans(runner.getExtData(runner.dataGauss, dbscan8.getDummy()), "kmeans9", dir);
+		plotKMeansClustering(kmeans9.getClustering(), runner.dataGauss, kmeans9.getIds(), Config.workDir + "/" + dir + "/kmeans9", "kmeans1");
 		ExtDBSCANClustering dbscan9 = runner.runDBSCAN(runner.getExtData(runner.dataDensity, kmeans9.getDummy()), minPts, epsilonDummy, "dbscan9", dir);
+		plotDBSCANClustering(dbscan9.getClustering(), runner.dataDensity, dbscan9.getIds(), Config.workDir + "/" + dir + "/dbscan9", "dbscan9");
 		
 		ExtKMeansClustering kmeans10 = runner.runKMeans(runner.getExtData(runner.dataGauss, dbscan9.getDummy()), "kmeans10", dir);
+		plotKMeansClustering(kmeans10.getClustering(), runner.dataGauss, kmeans10.getIds(), Config.workDir + "/" + dir + "/kmeans10", "kmeans10");
 		ExtDBSCANClustering dbscan10 = runner.runDBSCAN(runner.getExtData(runner.dataDensity, kmeans10.getDummy()), minPts, epsilonDummy, "dbscan10", dir);
+		plotDBSCANClustering(dbscan10.getClustering(), runner.dataDensity, dbscan10.getIds(), Config.workDir + "/" + dir + "/dbscan10", "dbscan10");
 	}
 	
 	/**
@@ -357,7 +376,7 @@ public class IntegratedRunner {
 	 * @param ids
 	 * @param filename
 	 */
-	private static void plotKMeansClustering(Clustering<KMeansModel> clustering, double[][] plotData, DBIDRange ids, String filename) {
+	private static void plotKMeansClustering(Clustering<KMeansModel> clustering, double[][] plotData, DBIDRange ids, String filename, String plotTitle) {
 		
 		XYSeriesCollection collection = new XYSeriesCollection();
 		for (int i = 0; i < clustering.getAllClusters().size(); i++) {
@@ -371,15 +390,15 @@ public class IntegratedRunner {
 			collection.addSeries(series);
 		}
 		
-		JFreeChart chart = ChartFactory.createScatterPlot("k-Means on Gauss Dimensions", "d1", "d2", collection, PlotOrientation.VERTICAL, true, false, false);
+		JFreeChart chart = ChartFactory.createScatterPlot(plotTitle, "f1", "f2", collection, PlotOrientation.VERTICAL, true, false, false);
 		XYPlot plot = (XYPlot)chart.getPlot();
 		plot.setDrawingSupplier(getCustomDrawingSupplier());
 		plot.setBackgroundPaint(new Color(210, 210, 210));
 	    plot.setOutlinePaint(Color.white);
 	    NumberAxis range = (NumberAxis)plot.getRangeAxis();
-        range.setTickUnit(new NumberTickUnit(100));
+        range.setTickUnit(new NumberTickUnit(200));
         NumberAxis domain = (NumberAxis)plot.getDomainAxis();
-        domain.setTickUnit(new NumberTickUnit(100));
+        domain.setTickUnit(new NumberTickUnit(200));
         plot.setDomainGridlinesVisible(false);
         plot.setRangeGridlinesVisible(false);
         
@@ -405,7 +424,7 @@ public class IntegratedRunner {
 	 * @param ids
 	 * @param filename
 	 */
-	private static void plotDBSCANClustering(Clustering<Model> clustering, double[][] plotData, DBIDRange ids, String filename) {
+	private static void plotDBSCANClustering(Clustering<Model> clustering, double[][] plotData, DBIDRange ids, String filename, String plotTitle) {
 		
 		XYSeriesCollection collection = new XYSeriesCollection();
 		for (int i = 0; i < clustering.getAllClusters().size(); i++) {
@@ -419,15 +438,15 @@ public class IntegratedRunner {
 			collection.addSeries(series);
 		}
 		
-		JFreeChart chart = ChartFactory.createScatterPlot("DBSCAN on Density Dimensions", "d1", "d2", collection, PlotOrientation.VERTICAL, true, false, false);
+		JFreeChart chart = ChartFactory.createScatterPlot(plotTitle, "\u03C1" + "1", "\u03C1" + "2", collection, PlotOrientation.VERTICAL, true, false, false);
 		XYPlot plot = (XYPlot)chart.getPlot();
 		plot.setDrawingSupplier(getCustomDrawingSupplier());
 		plot.setBackgroundPaint(new Color(210, 210, 210));
 	    plot.setOutlinePaint(Color.white);
 	    NumberAxis range = (NumberAxis)plot.getRangeAxis();
-        range.setTickUnit(new NumberTickUnit(50));
+        range.setTickUnit(new NumberTickUnit(200));
         NumberAxis domain = (NumberAxis)plot.getDomainAxis();
-        domain.setTickUnit(new NumberTickUnit(50));
+        domain.setTickUnit(new NumberTickUnit(200));
         plot.setDomainGridlinesVisible(false);
         plot.setRangeGridlinesVisible(false);
         

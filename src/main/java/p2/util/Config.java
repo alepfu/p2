@@ -31,7 +31,7 @@ public class Config {
 	/**
 	 * Number of noise points.
 	 */
-	public static int numNoisePoints = 100;
+	public static int numNoisePoints = 200;
 	
 	/**
 	 * Total number of points.
